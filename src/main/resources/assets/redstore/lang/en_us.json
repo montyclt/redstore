@@ -8,5 +8,8 @@
 	"gui.redstore.filter.strict.on": "Strict: components must match",
 	"gui.redstore.filter.strict.off": "Loose: item type only",
 	"gui.redstore.filter.strict.short.on": "=",
-	"gui.redstore.filter.strict.short.off": "~"
+	"gui.redstore.filter.strict.short.off": "~",
+	"block.redstore.redstone_clock": "Redstone Clock",
+	"message.redstore.clock.mode.square": "Square wave",
+	"message.redstore.clock.mode.pulse": "1-tick pulse"
 }

@@ -40,6 +40,8 @@ import org.gradle.api.tasks.TaskAction;
  * <ul>
  *   <li><b>filter hopper</b> — a hopper with the rim of its mouth recoloured to the item frame's
  *       wood, plus its two block models with the texture references swapped.</li>
+ *   <li><b>redstone clock</b> — the repeater plate with a mode badge and a clock dial engraved on
+ *       it, and the repeater's own delay models with nothing changed but their textures.</li>
  * </ul>
  *
  * <p>See spec/conventions.md section 10.
@@ -71,6 +73,41 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 			0xFF383838, 0xFF734029,
 			0xFF303030, 0xFF603623);
 
+	/** Vanilla's own unlit and lit redstone reds, sampled from block/repeater. */
+	private static final int ENGRAVED_OFF = 0xFF580101;
+	private static final int ENGRAVED_ON = 0xFFD70304;
+
+	/** Gold and shadow from the vanilla clock item. */
+	private static final int DIAL_GOLD = 0xFFFAD64A;
+	private static final int DIAL_DARK = 0xFF752802;
+
+	// ---------------------------------------------------------------- glyphs
+
+	/**
+	 * Glyphs are ASCII art so the edit lives in the diff rather than in a binary. '#' takes the
+	 * main colour, '+' the accent, and 'L', 'M' and 'D' a palette's light, mid and dark tones.
+	 *
+	 * <p>The clock's two glyphs are mode badges, not a picture of the signal: a solid 2x2 square
+	 * for the square wave, a 2x1 bar for the pulse. Drawing the real waveform was tried twice and
+	 * abandoned — a glyph cannot know the delay setting, so it drew the same cycles at 1 tick and
+	 * at 4, a timing diagram that lied about the timing. A badge claims nothing it cannot keep.
+	 */
+	private static final String[] GLYPH_SQUARE = {"##", "##"};
+	private static final String[] GLYPH_PULSE = {"##", ".."};
+
+	/** A clock face, so the block says what it is and not only what it does. */
+	private static final String[] GLYPH_DIAL = {".###.", "#.+.#", "#.++#", "#...#", ".###."};
+
+	private static final int GLYPH_X = 11;
+	private static final int GLYPH_Y = 9;
+	private static final int DIAL_X = 1;
+	private static final int DIAL_Y = 8;
+
+	/** The clock's icon keeps both torches, because the block has both. */
+	private static final String[] ICON_DIAL = {".##.", "#.+#", "#++#", ".##."};
+	private static final int ICON_DIAL_X = 5;
+	private static final int ICON_DIAL_Y = 8;
+
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	@InputFile
@@ -86,6 +123,7 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 
 		try (ZipFile jar = new ZipFile(getMinecraftJar().get().getAsFile())) {
 			filterHopper(jar, out);
+			redstoneClock(jar, out);
 		}
 	}
 
@@ -122,6 +160,67 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 			JsonObject model = readJson(jar, "assets/minecraft/models/block/" + pair[0] + ".json");
 			model.add("textures", textures.deepCopy());
 			writeJson(out, "models/block/" + pair[1] + ".json", model);
+		}
+	}
+
+	private void redstoneClock(ZipFile jar, Path out) throws IOException {
+		BufferedImage icon = readPng(jar, "assets/minecraft/textures/item/repeater.png");
+		stamp(icon, ICON_DIAL, ICON_DIAL_X, ICON_DIAL_Y, DIAL_GOLD, DIAL_DARK, null);
+		writePng(out, "textures/item/redstone_clock.png", icon);
+
+		for (String mode : new String[]{"", "_pulse"}) {
+			String[] glyph = mode.isEmpty() ? GLYPH_SQUARE : GLYPH_PULSE;
+
+			for (String lit : new String[]{"", "_on"}) {
+				String base = lit.isEmpty() ? "repeater" : "repeater_on";
+				int colour = lit.isEmpty() ? ENGRAVED_OFF : ENGRAVED_ON;
+
+				BufferedImage plate = readPng(jar, "assets/minecraft/textures/block/" + base + ".png");
+				stamp(plate, glyph, GLYPH_X, GLYPH_Y, colour, 0, null);
+				stamp(plate, GLYPH_DIAL, DIAL_X, DIAL_Y, DIAL_GOLD, DIAL_DARK, null);
+				writePng(out, "textures/block/redstone_clock_top" + mode + lit + ".png", plate);
+			}
+		}
+
+		// The repeater's model already encodes the delay as the position of a sliding torch, and a
+		// clock wants exactly that plus a second, fixed torch — which is the repeater, unchanged.
+		// A locked clock is always off, so only the unlit locked models are generated; the block
+		// state file points both powered values at them.
+		String[][] variants = {{"", ""}, {"", "_on"}, {"_pulse", ""}, {"_pulse", "_on"},
+				{"", "_locked"}, {"_pulse", "_locked"}};
+
+		for (int delay = 1; delay <= 4; delay++) {
+			for (String[] variant : variants) {
+				String mode = variant[0];
+				String suffix = variant[1];
+				boolean locked = suffix.equals("_locked");
+				boolean lit = suffix.equals("_on");
+
+				JsonObject model = readJson(jar,
+						"assets/minecraft/models/block/repeater_" + delay + "tick" + suffix + ".json");
+
+				String top = "redstore:block/redstone_clock_top" + mode + (lit ? "_on" : "");
+				JsonObject textures = new JsonObject();
+				textures.addProperty("particle", top);
+				textures.addProperty("slab", "minecraft:block/smooth_stone");
+				textures.addProperty("top", top);
+
+				// A locked model keeps the fixed torch and adds the bedrock bar, so it needs both
+				// texture keys. Setting only the bar left #unlit dangling and the game logged a
+				// missing texture reference for all eight locked models.
+				if (locked) {
+					textures.addProperty("lock", "minecraft:block/bedrock");
+				}
+
+				if (lit) {
+					textures.addProperty("lit", "minecraft:block/redstone_torch");
+				} else {
+					textures.addProperty("unlit", "minecraft:block/redstone_torch_off");
+				}
+
+				model.add("textures", textures);
+				writeJson(out, "models/block/redstone_clock_" + delay + "tick" + mode + suffix + ".json", model);
+			}
 		}
 	}
 
