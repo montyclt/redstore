@@ -21,8 +21,12 @@ import net.minecraft.world.level.material.PushReaction;
 
 import net.montyclt.redstore.block.FilterHopperBlock;
 import net.montyclt.redstore.block.RedstoneClockBlock;
+import net.montyclt.redstore.block.gate.GateOperation;
+import net.montyclt.redstore.block.gate.LogicGateBlock;
 
 public final class RedstoreBlocks {
+	public static final Block AND_GATE = gate(RedstoreBlockIds.AND_GATE, GateOperation.AND);
+
 	public static final Block REDSTONE_CLOCK = register(
 			RedstoreBlockIds.REDSTONE_CLOCK,
 			RedstoneClockBlock::new,
@@ -38,9 +42,18 @@ public final class RedstoreBlocks {
 	public static void initialize() {
 		// The mod's own creative tab comes later; for now the blocks live next to the vanilla hopper.
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(tab -> {
+			tab.accept(AND_GATE.asItem());
 			tab.accept(REDSTONE_CLOCK.asItem());
 			tab.accept(FILTER_HOPPER.asItem());
 		});
+	}
+
+	private static Block gate(BlockItemId id, GateOperation operation) {
+		return register(
+				id,
+				properties -> new LogicGateBlock(operation, properties),
+				plateProperties(state -> state.getValue(LogicGateBlock.POWERED))
+		);
 	}
 
 	/** Every flat plate shares these: break instantly, pop off pistons, glow while emitting. */

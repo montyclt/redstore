@@ -140,6 +140,9 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	/** light, mid, dark, sampled from each ingot's own texture. */
 	private static final Map<String, int[]> GATE_METALS = new LinkedHashMap<>();
 
+	static {
+		GATE_METALS.put("and_gate", new int[]{0xFFD8D8D8, 0xFFA8A8A8, 0xFF5E5E5E});
+	}
 
 	/**
 	 * The gate icon comes from the comparator's sprite, not the repeater's: the comparator already

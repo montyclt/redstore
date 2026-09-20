@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    "redstore:and_gate",
     "redstore:redstone_clock",
     "redstore:filter_hopper"
   ]

@@ -11,5 +11,6 @@
 	"gui.redstore.filter.strict.short.off": "~",
 	"block.redstore.redstone_clock": "Reloj de redstone",
 	"message.redstore.clock.mode.square": "Onda cuadrada",
-	"message.redstore.clock.mode.pulse": "Pulso de 1 tick"
+	"message.redstore.clock.mode.pulse": "Pulso de 1 tick",
+	"block.redstore.and_gate": "Puerta AND"
 }
