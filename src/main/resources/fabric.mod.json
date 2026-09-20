@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "redstore",
+	"version": "${version}",
+	"name": "Redstore",
+	"description": "Redstone components that compress vanilla-possible circuits into single blocks.",
+	"authors": ["montyclt"],
+	"license": "BSD-2-Clause",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["net.montyclt.redstore.Redstore"],
+		"client": ["net.montyclt.redstore.RedstoreClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

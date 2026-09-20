@@ -1,0 +1,17 @@
+# Gradle and build output. These patterns are anchored on purpose: an unanchored "build/" also
+# matches any Java package called build, which is exactly where the asset generator lives.
+/build/
+/buildSrc/build/
+/.gradle/
+/buildSrc/.gradle/
+
+# Development game instance
+/run/
+
+# IDEs
+/.idea/
+*.iml
+/.vscode/
+
+# Logs
+*.log

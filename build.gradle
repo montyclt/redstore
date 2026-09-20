@@ -1,0 +1,77 @@
+plugins {
+	// The non-remapping Loom plugin: Minecraft 26.1+ ships unobfuscated.
+	id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"redstore" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+// Textures and block models are derived from the vanilla jar at build time, never committed: the
+// repository holds the code that describes each edit, not a modified copy of Mojang's art. See
+// spec/conventions.md section 10.
+def generatedAssets = layout.buildDirectory.dir("generated/assets")
+
+tasks.register("generateAssets", net.montyclt.redstore.build.GenerateAssetsTask) {
+	group = "build"
+	description = "Derives the mod's textures and block models from the vanilla Minecraft jar."
+	minecraftJar = file("${gradle.gradleUserHomeDir}/caches/fabric-loom/${project.minecraft_version}/minecraft-client.jar")
+	outputDirectory = generatedAssets
+}
+
+sourceSets.main.resources.srcDir(generatedAssets)
+
+// Everything that reads the main resources has to wait for them to exist: processResources for
+// the jar and the development client, sourcesJar because it packs the same source set.
+tasks.matching { it.name in ["processResources", "sourcesJar"] }.configureEach {
+	dependsOn("generateAssets")
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
