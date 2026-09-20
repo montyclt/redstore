@@ -3,6 +3,7 @@
   "values": [
     "redstore:and_gate",
     "redstore:or_gate",
+    "redstore:xor_gate",
     "redstore:redstone_clock"
   ]
 }

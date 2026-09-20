@@ -143,6 +143,7 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	static {
 		GATE_METALS.put("and_gate", new int[]{0xFFD8D8D8, 0xFFA8A8A8, 0xFF5E5E5E});
 		GATE_METALS.put("or_gate", new int[]{0xFFE77C56, 0xFFC15A36, 0xFF9C4529});
+		GATE_METALS.put("xor_gate", new int[]{0xFFFDF55F, 0xFFFAD64A, 0xFFB26411});
 	}
 
 	/**

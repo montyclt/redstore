@@ -27,6 +27,7 @@ import net.montyclt.redstore.block.gate.LogicGateBlock;
 public final class RedstoreBlocks {
 	public static final Block AND_GATE = gate(RedstoreBlockIds.AND_GATE, GateOperation.AND);
 	public static final Block OR_GATE = gate(RedstoreBlockIds.OR_GATE, GateOperation.OR);
+	public static final Block XOR_GATE = gate(RedstoreBlockIds.XOR_GATE, GateOperation.XOR);
 
 	public static final Block REDSTONE_CLOCK = register(
 			RedstoreBlockIds.REDSTONE_CLOCK,
@@ -45,6 +46,7 @@ public final class RedstoreBlocks {
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(tab -> {
 			tab.accept(AND_GATE.asItem());
 			tab.accept(OR_GATE.asItem());
+			tab.accept(XOR_GATE.asItem());
 			tab.accept(REDSTONE_CLOCK.asItem());
 			tab.accept(FILTER_HOPPER.asItem());
 		});

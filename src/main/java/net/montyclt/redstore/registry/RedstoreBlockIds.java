@@ -9,6 +9,7 @@ import net.montyclt.redstore.Redstore;
 public final class RedstoreBlockIds {
 	public static final BlockItemId AND_GATE = create("and_gate");
 	public static final BlockItemId OR_GATE = create("or_gate");
+	public static final BlockItemId XOR_GATE = create("xor_gate");
 	public static final BlockItemId REDSTONE_CLOCK = create("redstone_clock");
 	public static final BlockItemId FILTER_HOPPER = create("filter_hopper");
 

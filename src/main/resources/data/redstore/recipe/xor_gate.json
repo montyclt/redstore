@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " T ",
+    "TMT",
+    "SSS"
+  ],
+  "key": {
+    "T": "minecraft:redstone_torch",
+    "M": "minecraft:gold_ingot",
+    "S": "minecraft:smooth_stone"
+  },
+  "result": {
+    "id": "redstore:xor_gate",
+    "count": 1
+  }
+}
