@@ -35,12 +35,42 @@ import org.gradle.api.tasks.TaskAction;
  * and the repository never contains a modified Mojang texture, because every one of them is
  * produced at build time from the player's own copy of the game.
  *
- * <p>This is the machinery on its own: reading a file out of the jar, recolouring or engraving it,
- * and writing the result. Each block adds its own derivation to it.
+ * <p>What is derived:
+ *
+ * <ul>
+ *   <li><b>filter hopper</b> — a hopper with the rim of its mouth recoloured to the item frame's
+ *       wood, plus its two block models with the texture references swapped.</li>
+ * </ul>
  *
  * <p>See spec/conventions.md section 10.
  */
 public abstract class GenerateAssetsTask extends DefaultTask {
+	// ---------------------------------------------------------------- palettes
+
+	/**
+	 * The hopper's grey shading ramp mapped onto the item frame's wood ramp, pairing the two by
+	 * lightness. Only the hue changes, so vanilla's pixel-art shading survives untouched; a
+	 * multiplicative tint would have flattened it.
+	 */
+	private static final Map<Integer, Integer> BLOCK_WOOD = ramp(
+			0xFF676161, 0xFFAC5D31,
+			0xFF595858, 0xFFA45531,
+			0xFF4F4F4F, 0xFF944C29,
+			0xFF494848, 0xFF834829,
+			0xFF3F3E42, 0xFF7B4429,
+			0xFF343438, 0xFF734029,
+			0xFF2D2D32, 0xFF603623);
+
+	/** The inventory icon is drawn with its own, slightly different greys. */
+	private static final Map<Integer, Integer> ITEM_WOOD = ramp(
+			0xFF626162, 0xFFAC5D31,
+			0xFF525552, 0xFFA45531,
+			0xFF4A4C4A, 0xFF944C29,
+			0xFF414441, 0xFF834829,
+			0xFF3E3E3E, 0xFF7B4429,
+			0xFF383838, 0xFF734029,
+			0xFF303030, 0xFF603623);
+
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	@InputFile
@@ -53,6 +83,46 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	public void generate() throws IOException {
 		Path out = getOutputDirectory().get().getAsFile().toPath().resolve("assets/redstore");
 		Files.createDirectories(out);
+
+		try (ZipFile jar = new ZipFile(getMinecraftJar().get().getAsFile())) {
+			filterHopper(jar, out);
+		}
+	}
+
+	// ---------------------------------------------------------------- blocks
+
+	private void filterHopper(ZipFile jar, Path out) throws IOException {
+		BufferedImage top = readPng(jar, "assets/minecraft/textures/block/hopper_top.png");
+		// The outer two-pixel ring of the top face becomes the frame.
+		recolour(top, BLOCK_WOOD, (x, y) -> Math.min(Math.min(x, y), Math.min(15 - x, 15 - y)) <= 1);
+
+		BufferedImage side = readPng(jar, "assets/minecraft/textures/block/hopper_outside.png");
+		// The collar spans y=11..16 in the model and its faces declare no UV, so they default to
+		// v = 16 - y: rows 0..4 of this texture. Rows 0-1 are the top of it.
+		recolour(side, BLOCK_WOOD, (x, y) -> y <= 1);
+
+		BufferedImage icon = readPng(jar, "assets/minecraft/textures/item/hopper.png");
+		// The icon's rim, following its isometric outline: the top edge, then the corners down.
+		recolour(icon, ITEM_WOOD, (x, y) -> y == 2
+				|| (y == 3 && (x == 2 || x == 3 || x == 12 || x == 13))
+				|| (y == 4 && (x == 1 || x == 2 || x == 13 || x == 14)));
+
+		writePng(out, "textures/block/filter_hopper_top.png", top);
+		writePng(out, "textures/block/filter_hopper_outside.png", side);
+		writePng(out, "textures/item/filter_hopper.png", icon);
+
+		JsonObject textures = new JsonObject();
+		textures.addProperty("particle", "redstore:block/filter_hopper_outside");
+		textures.addProperty("top", "redstore:block/filter_hopper_top");
+		textures.addProperty("side", "redstore:block/filter_hopper_outside");
+		// The funnel's inner face has no rim to recolour, so it stays vanilla.
+		textures.addProperty("inside", "minecraft:block/hopper_inside");
+
+		for (String[] pair : new String[][]{{"hopper", "filter_hopper"}, {"hopper_side", "filter_hopper_side"}}) {
+			JsonObject model = readJson(jar, "assets/minecraft/models/block/" + pair[0] + ".json");
+			model.add("textures", textures.deepCopy());
+			writeJson(out, "models/block/" + pair[1] + ".json", model);
+		}
 	}
 
 	// ---------------------------------------------------------------- pixels

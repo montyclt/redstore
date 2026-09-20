@@ -7,12 +7,19 @@ import net.minecraft.resources.Identifier;
 
 import net.fabricmc.api.ModInitializer;
 
+import net.montyclt.redstore.registry.RedstoreBlockEntities;
+import net.montyclt.redstore.registry.RedstoreBlocks;
+import net.montyclt.redstore.registry.RedstoreMenus;
+
 public class Redstore implements ModInitializer {
 	public static final String MOD_ID = "redstore";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	@Override
 	public void onInitialize() {
+		RedstoreBlocks.initialize();
+		RedstoreBlockEntities.initialize();
+		RedstoreMenus.initialize();
 	}
 
 	public static Identifier id(String path) {

@@ -1,0 +1,12 @@
+{
+	"block.redstore.filter_hopper": "Filter Hopper",
+	"container.redstore.filter_hopper": "Filter Hopper",
+	"gui.redstore.filter.mode.whitelist": "Whitelist: only the filtered item enters",
+	"gui.redstore.filter.mode.blacklist": "Blacklist: everything but the filtered item enters",
+	"gui.redstore.filter.mode.short.whitelist": "W",
+	"gui.redstore.filter.mode.short.blacklist": "B",
+	"gui.redstore.filter.strict.on": "Strict: components must match",
+	"gui.redstore.filter.strict.off": "Loose: item type only",
+	"gui.redstore.filter.strict.short.on": "=",
+	"gui.redstore.filter.strict.short.off": "~"
+}
