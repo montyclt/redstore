@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "redstore:and_gate"
+    "redstore:and_gate",
+    "redstore:or_gate"
   ]
 }

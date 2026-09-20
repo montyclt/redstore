@@ -26,6 +26,7 @@ import net.montyclt.redstore.block.gate.LogicGateBlock;
 
 public final class RedstoreBlocks {
 	public static final Block AND_GATE = gate(RedstoreBlockIds.AND_GATE, GateOperation.AND);
+	public static final Block OR_GATE = gate(RedstoreBlockIds.OR_GATE, GateOperation.OR);
 
 	public static final Block REDSTONE_CLOCK = register(
 			RedstoreBlockIds.REDSTONE_CLOCK,
@@ -43,6 +44,7 @@ public final class RedstoreBlocks {
 		// The mod's own creative tab comes later; for now the blocks live next to the vanilla hopper.
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(tab -> {
 			tab.accept(AND_GATE.asItem());
+			tab.accept(OR_GATE.asItem());
 			tab.accept(REDSTONE_CLOCK.asItem());
 			tab.accept(FILTER_HOPPER.asItem());
 		});
