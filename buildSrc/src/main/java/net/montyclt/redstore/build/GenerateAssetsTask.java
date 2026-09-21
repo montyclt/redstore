@@ -268,6 +268,11 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	public void generate() throws IOException {
 		Path root = getOutputDirectory().get().getAsFile().toPath();
 
+		// Everything under here was written by this task, so the run starts from nothing. Gradle
+		// leaves a task's old output alone, and a file that used to be derived and is not any more
+		// would otherwise sit in the directory and be packed into the jar for ever.
+		wipe(root);
+
 		try (ZipFile jar = new ZipFile(getMinecraftJar().get().getAsFile())) {
 			derive(new JarSource(jar), new Target(root.resolve("assets/redstore"), 1, true));
 			faithful(jar, root);
@@ -447,6 +452,18 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		}
 
 		fillRect(icon, left, y, right - left + stroke, stroke, SLOT_ICON_GREY);
+	}
+
+	private static void wipe(Path root) throws IOException {
+		if (!Files.isDirectory(root)) {
+			return;
+		}
+
+		try (var walk = Files.walk(root)) {
+			for (Path path : walk.sorted(java.util.Comparator.reverseOrder()).toList()) {
+				Files.delete(path);
+			}
+		}
 	}
 
 	private static void fillRect(BufferedImage image, int x, int y, int width, int height, int colour) {
