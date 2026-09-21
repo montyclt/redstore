@@ -19,7 +19,7 @@ It is **not** a logic gate and is deliberately outside `redstore:logic_gates`.
 | Identifier | `redstore:redstone_clock` |
 | Display name (en_us) | Redstone Clock |
 | Display name (es_es) | Reloj de redstone |
-| Input faces | back only, as a **stop** input (§2) |
+| Input faces | the two sides, as a **stop** input, read with the repeater's lock rule (§2) |
 | Output | 15 or 0; no analog mode |
 | Main property (right-click) | `delay`, cycling 1 → 2 → 3 → 4 |
 | Second axis of the same cycle | `pulse`, square wave ↔ 1-tick pulse |
@@ -45,8 +45,8 @@ clock that simply runs.
 
 * **The stop input is the two side faces**, read with the inherited rule
   ([plate §4](abstract-redstone-plate.md)). Any value greater than 0 on either one stops the clock.
-* Stopping is immediate: the output drops to 0 and the phase resets, so releasing the lever always
-  starts a fresh ON phase. No half-finished pulses.
+* Stopping is immediate: the output drops to 0 and the phase resets, so releasing the stop signal
+  starts a fresh ON phase, with the one caveat in §2.3. No half-finished pulses.
 * A stopped clock shows the **bedrock bar** across the plate, in the sliding torch's place, exactly
   like a locked repeater. The bar sits at the torch's position, so the setting stays readable while
   the clock is stopped. The block state property is `locked`, the same name the repeater uses.
@@ -304,8 +304,8 @@ public class RedstoneClockBlock extends RedstonePlateBlock {
 }
 ```
 
-Beyond the inherited overrides, the clock overrides `neighborChanged` (start/stop on the back
-input), `onPlace` and `tick`.
+Beyond the inherited overrides, the clock overrides `neighborChanged` (start/stop on the side
+lock inputs), `onPlace` and `tick`.
 
 ## 10. What 26.3 actually provides
 

@@ -30,12 +30,14 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 
 ## Phase 3 — Redstone clock
 
-* `RedstoneClockBlock`, `delay`/`pulse`/`powered` states, self-rescheduling ticks, back-face stop
-  input, both duty-cycle modes and the `clock.allowPulseMode` switch.
+* `RedstoneClockBlock`, `delay`/`pulse`/`powered`/`locked` states, self-rescheduling ticks, the
+  side stop inputs on the repeater's lock rule, both duty-cycle modes and the
+  `clock.allowPulseMode` switch.
 * Extends `RedstonePlateBlock` and reuses the plate model template from phase 1; only two new
   textures and a sliding torch element.
 * **Done when:** a clock at each of the four settings measures the same period as the equivalent
-  vanilla repeater loop, stops instantly on a lever, and resumes with a full ON phase.
+  vanilla repeater loop, stops instantly when a diode aimed at its side locks it, and resumes on
+  release as [blocks/redstone-clock.md](blocks/redstone-clock.md) §2.3 describes.
 
 ## Phase 4 — Filter hopper
 
