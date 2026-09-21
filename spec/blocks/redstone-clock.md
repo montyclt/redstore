@@ -25,7 +25,6 @@ It is **not** a logic gate and is deliberately outside `redstore:logic_gates`.
 | Second axis of the same cycle | `pulse`, square wave ↔ 1-tick pulse |
 | Recipe | two torches, one clock, one dust, three smooth stone |
 | Extra tags | none beyond `redstore:redstone_plates` |
-| Config keys | `clock.enabled`, `clock.allowPulseMode` |
 
 ## 2. Running and stopping
 
@@ -114,9 +113,6 @@ Consequences, all intentional:
   out of the formula.
 * The fastest clock is 2 redstone ticks per cycle. There is deliberately no 0-tick or
   1-game-tick clock.
-
-Pulse mode can be disabled server-wide with `clock.allowPulseMode = false`; see
-[../config.md](../config.md).
 
 ### 3.1 Scheduling
 

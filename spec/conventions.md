@@ -83,10 +83,7 @@ src/main/java/net/montyclt/redstore
 │   └── FilterHopperMenu.java
 ├── chunkloading/
 │   ├── ChunkLoaderManager.java        # ticket add/remove, deferred to the server thread
-│   └── ChunkLoaderSavedData.java      # per-dimension persistent record of owned loaders
-├── config/
-│   ├── RedstoreConfig.java            # record + Codec
-│   └── ConfigLoader.java
+│   └── ChunkLoaderSavedData.java      # per-dimension persistent record of our loaders
 ├── registry/
 │   ├── RedstoreBlockIds.java          # BlockItemId per block
 │   ├── RedstoreBlocks.java
@@ -128,12 +125,11 @@ src/main/resources/
 
 `Redstore#onInitialize` must, in this order:
 
-1. Load the configuration file (see [config.md](config.md)).
-2. `RedstoreBlocks.initialize()` → blocks + block items.
-3. `RedstoreBlockEntities.initialize()`.
-4. `RedstoreMenus.initialize()`.
-5. `RedstoreCreativeTabs.initialize()`.
-6. `ChunkLoaderManager.initialize()` → registers the server lifecycle listeners.
+1. `RedstoreBlocks.initialize()` → blocks + block items.
+2. `RedstoreBlockEntities.initialize()`.
+3. `RedstoreMenus.initialize()`.
+4. `RedstoreCreativeTabs.initialize()`.
+5. `ChunkLoaderManager.initialize()` → registers the server lifecycle listeners.
 
 `RedstoreClient#onInitializeClient` registers `MenuScreens.register(RedstoreMenus.FILTER_HOPPER,
 FilterHopperScreen::new)`.
@@ -148,7 +144,6 @@ FilterHopperScreen::new)`.
   `CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS)` — the Fabric API
   class is `net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents`, not the older
   `ItemGroupEvents`.
-* Items whose block is disabled in the config are omitted from both tabs.
 
 ## 7. Translations
 
@@ -176,10 +171,7 @@ Key scheme:
 | `gui.redstore.filter.slot_hint` | Filter item | Ítem de filtro |
 | `message.redstore.clock.mode.square` | Square wave | Onda cuadrada |
 | `message.redstore.clock.mode.pulse` | 1-tick pulse | Pulso de 1 tick |
-| `message.redstore.chunk_loader.status` | Chunk [%s, %s] in %s is loaded (%s/%s used) | El chunk [%s, %s] en %s está cargado (%s/%s usados) |
-| `message.redstore.chunk_loader.limit` | Chunk loader limit reached (%s) | Límite de cargadores de chunks alcanzado (%s) |
-| `message.redstore.chunk_loader.dimension` | Chunk loaders are disabled in this dimension | Los cargadores de chunks están desactivados en esta dimensión |
-| `message.redstore.disabled` | This block is disabled on this server | Este bloque está desactivado en este servidor |
+| `message.redstore.chunk_loader.status` | Chunk [%s, %s] in %s is loaded | El chunk [%s, %s] en %s está cargado |
 
 Player-facing runtime messages are sent as **action bar** text, not chat.
 

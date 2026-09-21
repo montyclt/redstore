@@ -32,6 +32,9 @@ limits.
 Install on both the client and the server: the mod adds blocks and a screen, so it is not
 server-side only.
 
+There is no configuration file. Every block behaves the same everywhere, and a server that does not
+want one of them removes its recipe with a datapack.
+
 ## Building
 
 **This mod is distributed as source.** Build it yourself:

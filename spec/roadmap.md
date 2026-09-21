@@ -8,7 +8,6 @@ Phases are ordered so that each one leaves the mod in a playable, shippable stat
 * `fabric.mod.json`, `Redstore` + `RedstoreClient` entry points, `Redstore.id(...)` helper.
 * Empty registry holder classes, creative tab, datagen entry point.
 * The derived-asset pipeline, `generateAssets`; see [conventions.md](conventions.md) §10.
-* Config record, codec, loader and `/redstore reload`.
 * **Done when:** the mod loads on a dedicated server and a client and shows an empty creative tab.
 
 ## Phase 1 — Logic gates
@@ -31,8 +30,7 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 ## Phase 3 — Redstone clock
 
 * `RedstoneClockBlock`, `delay`/`pulse`/`powered`/`locked` states, self-rescheduling ticks, the
-  side stop inputs on the repeater's lock rule, both duty-cycle modes and the
-  `clock.allowPulseMode` switch.
+  side stop inputs on the repeater's lock rule, and both duty-cycle modes.
 * Extends `RedstonePlateBlock` and reuses the plate model template from phase 1; only two new
   textures and a sliding torch element.
 * **Done when:** a clock at each of the four settings measures the same period as the equivalent
@@ -43,7 +41,7 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 
 * Block, block entity, access widener, vanilla hopper logic reuse.
 * Whitelist filtering with a real filter item (no toggles yet), menu, screen, GUI sprite.
-* Then the blacklist and strict-matching buttons, `ContainerData` sync, config switches.
+* Then the blacklist and strict-matching buttons and their `ContainerData` sync.
 * **Done when:** a single filter hopper replaces a vanilla sorter cell in a working item sorter, at
   the same throughput.
 
@@ -51,14 +49,14 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 
 * Block, block entity, `ChunkLoaderManager`, `ChunkLoaderSavedData`.
 * Deferred ticket acquisition/release, ownership bookkeeping, startup reconciliation.
-* Placement limits, dimension whitelist, status message, particles.
+* The status message and the particles.
 * **Done when:** a hopper clock in a loader's chunk keeps running with no player in the dimension,
   survives a full server restart, and breaking the block stops it — while an unrelated
   `/forceload`ed chunk is left untouched.
 
 ## Phase 6 — Polish
 
-* `/redstore loaders list|count`.
+* `/redstore loaders list`, to find every loader a dimension holds.
 * Optional mixin into `RedStoneWireBlock#shouldConnectTo` so dust does not visually connect to a
   gate's unused back face.
 * `BlockEntityRenderer` showing the filter item on the filter hopper's sides.

@@ -170,8 +170,6 @@ modes.
 * Each click plays `SoundEvents.COMPARATOR_CLICK`; the subclass picks the pitch, and pitch should
   encode the setting so the cycle is audible without looking.
 * The click returns `InteractionResult.SUCCESS` and immediately re-evaluates the block.
-* When the server config disables a mode, that mode's settings are skipped by the cycle rather
-  than producing a dead click.
 
 ## 8. Block state
 
@@ -286,7 +284,6 @@ A concrete plate spec is complete when it answers all of these:
 | 7 | Its top textures, its torch layout and its model count |
 | 8 | Its recipe, read as a parts list of what the block shows |
 | 9 | Any tag beyond `redstore:redstone_plates` |
-| 10 | Any config key that gates one of its modes |
 
 ## 14. What 26.3 provides, shared
 

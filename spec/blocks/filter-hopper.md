@@ -35,9 +35,6 @@ Let `f` be the filter stack and `s` the incoming stack.
   (enchantments, custom name, dyed colour, potion contents, …). Damage is a component, so a strict
   filter holding an undamaged pickaxe rejects a damaged one.
 
-Strict mode can be disabled server-wide (`filterHopper.allowStrictMatching = false`), in which case
-the button is rendered greyed out and clicking it does nothing.
-
 ### 2.1 Which operations the filter affects
 
 The filter is implemented as a single override of `canPlaceItem(int slot, ItemStack stack)` on the
@@ -114,7 +111,7 @@ above are the layout, whoever paints it.
 
 * Button presses travel through `AbstractContainerMenu#clickMenuButton(Player, int id)`:
   `id = 0` toggles whitelist/blacklist, `id = 1` toggles strict matching. Both validate
-  `stillValid(player)` and the server config before applying, then mark the block entity changed.
+  `stillValid(player)` before applying, then mark the block entity changed.
 * The two booleans are mirrored to the client with a `ContainerData` of size 2 (`0/1` values) so the
   buttons render correctly for every viewer.
 * The filter slot syncs like any normal slot.

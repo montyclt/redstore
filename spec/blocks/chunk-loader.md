@@ -3,7 +3,7 @@
 `redstore:chunk_loader`
 
 A full block that keeps the chunk it stands in permanently force-loaded and fully ticking, with no
-fuel and no redstone control, bounded by server configuration.
+fuel, no redstone control and nothing to configure.
 
 **Its vanilla equivalent is an ender pearl stasis chamber**, not `/forceload`. Since 1.21.2 a
 thrown ender pearl keeps the chunk it occupies loaded and fully ticking, and a stasis chamber — a
@@ -23,8 +23,7 @@ licenses this block is that the same result is already buildable in survival.
   the chunk tick, hoppers move items, furnaces smelt, crops grow.
 * The load **persists across server restarts**. The chunk is loaded again as soon as the dimension
   is loaded, without anyone having to visit it.
-* The load ends only when the block is broken (or destroyed by an explosion, or the block is
-  disabled in the config).
+* The load ends only when the block is broken, including by an explosion.
 * No redstone control, no fuel, no owner-online requirement. Placed means loaded.
 * Exactly its own chunk. To cover a larger area, place more loaders — this keeps the cost of a
   build visible and linear.
@@ -61,7 +60,6 @@ Releasing blindly would silently undo an operator's `/forceload`. The mod theref
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `loaders` | map `ChunkPos → list of BlockPos` | every chunk loader block we know about |
-| `owners` | map `BlockPos → UUID` | the player who placed each loader, for the per-player limit |
 | `preexisting` | set of `ChunkPos` | chunks that were already force-loaded by someone else when our first loader claimed them |
 
 Release rule: unforce a chunk only if, after removing this block, `loaders` has no entry left for
@@ -84,36 +82,32 @@ manager:
    repairs the case where the vanilla forced-chunk set was edited or lost).
 3. Once each recorded chunk is loaded, verifies that a `ChunkLoaderBlockEntity` is actually present
    at each recorded `BlockPos`. Stale entries (world edited externally, block removed while the mod
-   was uninstalled, config now disables the block) are dropped and the chunk is released.
-4. Applies the configured caps: if `chunkLoader.maxTotal` is exceeded, the newest loaders beyond the
-   cap are released (but **not** broken) and a warning is logged.
+   was uninstalled) are dropped and the chunk is released.
 
-## 3. Placement rules and limits
+## 3. Placement
 
-On `setPlacedBy`:
+Placement never fails. Any player may place a loader anywhere, in any dimension, as many times as
+they can pay for the recipe — exactly as any player may already keep as many stasis chambers in
+flight as they care to build. A per-player or per-server cap would be a rule vanilla does not have,
+and this mod does not invent rules ([../README.md](../README.md), design rule 4).
 
-| Check | Failure behaviour |
-| --- | --- |
-| `chunkLoader.enabled` | Placement is rejected, the item is returned, action bar `message.redstore.disabled`. |
-| Dimension is in `chunkLoader.allowedDimensions` (empty list = all) | Rejected, action bar `message.redstore.chunk_loader.dimension`. |
-| Owner is under `chunkLoader.maxPerPlayer` (`-1` = unlimited) | Rejected, action bar `message.redstore.chunk_loader.limit`. Operators bypass this when `chunkLoader.opsBypassLimits` is true. |
-| Server is under `chunkLoader.maxTotal` (`-1` = unlimited) | Rejected, action bar `message.redstore.chunk_loader.limit`. |
+A server that does not want chunk loaders removes the recipe with a datapack, the way it would
+remove a vanilla one. That is a decision about what can be crafted, which is where Minecraft
+already puts it, and it needs nothing from the mod.
 
-The owner UUID is stored both in the block entity and in the saved data. Blocks placed by
-non-players (dispensers, structure blocks, commands) have no owner and count only towards
-`maxTotal`.
+Nothing records who placed a loader: with no limit to enforce, an owner would be a UUID kept in
+saved data for no one to read.
 
 ## 4. Interaction and feedback
 
 | Action | Effect |
 | --- | --- |
-| Right-click with an empty hand | Action-bar status: `message.redstore.chunk_loader.status` — chunk coordinates, dimension, and the owner's usage `n/max`. No GUI. |
+| Right-click with an empty hand | Action-bar status: `message.redstore.chunk_loader.status` — the chunk's coordinates and dimension. No GUI. |
 | Break | Releases the chunk (subject to §2.2) and drops the block item. |
 
 Visual state: the block always renders "active" — there is no off state. It emits light level 7 and
 spawns two `ParticleTypes.PORTAL`-style particles per second on the client above the block so that
-active loaders are findable in a dark base. Particles can be turned off with
-`chunkLoader.particles = false`.
+active loaders are findable in a dark base.
 
 ## 5. Block properties
 
@@ -135,7 +129,6 @@ BlockBehaviour.Properties.of()
 
 | NBT key | Type | Meaning |
 | --- | --- | --- |
-| `Owner` | UUID (optional) | player who placed it |
 | `Claimed` | boolean | whether this block currently holds the chunk claim (used to detect a half-applied state after a crash) |
 
 It does **not** tick. Its only job is to register itself with `ChunkLoaderManager` on

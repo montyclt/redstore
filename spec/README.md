@@ -31,8 +31,10 @@ block, so that contraptions stay readable and compact.
    anything new to predict this mod. A deviation is allowed only with a written justification in
    the block's spec (see [blocks/abstract-redstone-plate.md](blocks/abstract-redstone-plate.md) §4.1 for a
    worked example of the reasoning, which ended in copying vanilla).
-5. **Server-friendly.** Everything the mod adds that can cost performance (only the chunk loader,
-   really) is bounded by server-side configuration. See [config.md](config.md).
+5. **No configuration.** The mod has no config file and no knobs. Every block behaves the same
+   on every server, so what a player learns here is true everywhere. A server that does not want
+   one of these blocks removes its recipe with a datapack, exactly as it would remove a vanilla
+   one.
 6. **Vanilla-shaped UX.** The blocks look, sound and are crafted like the vanilla redstone family.
 
 ## 3. Contents
@@ -52,7 +54,6 @@ block, so that contraptions stay readable and compact.
 | --- | --- |
 | [README.md](README.md) | This overview and index. |
 | [conventions.md](conventions.md) | Toolchain, versions, package layout, naming, datagen, translations, creative tab. |
-| [config.md](config.md) | Server configuration file and every knob it exposes. |
 | [roadmap.md](roadmap.md) | Implementation phases and explicit non-goals. |
 | [ideas/](ideas/) | Parked ideas: one file each, none of them committed to. |
 | [blocks/abstract-redstone-plate.md](blocks/abstract-redstone-plate.md) | **Abstract.** What every flat plate component shares: form, orientation, signal reading rule, output, interaction grammar, model template, recipe principle. |

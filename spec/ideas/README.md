@@ -50,7 +50,6 @@ mode on all three gates.
   the only saturated purple in vanilla's palette and cannot be mistaken for redstone.
 * Twelve more textures and twelve more models, all generated, and 256 block state variants per gate
   instead of 128.
-* A `logicGates.allowAnalogMode` switch in the server config, which was specified and never built.
 * Negation defined as the complement, `15 − x`: it agrees with boolean NOT at both ends, it is its
   own inverse, and it reverses order, so De Morgan's laws hold exactly — `15 − min(a,b)` really is
   `max(15−a, 15−b)`.
