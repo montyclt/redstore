@@ -114,10 +114,9 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 */
 	private static final int SLOT_ICON_GREY = 0xFF555555;
 
-	// ---------------------------------------------------------------- glyphs	// ---------------------------------------------------------------- glyphs
+	// ---------------------------------------------------------------- glyphs
 
 	/**
-	 * Vanilla's idiom for "the same plate, a different job" is an inlay	/**
 	 * Vanilla's idiom for "the same plate, a different job" is an inlay, and the comparator is the
 	 * worked example: its plate carries a piece of quartz set into it, drawn in four warm tones in
 	 * {@code block/comparator.png}, rows 6 to 10. A gate is the same plate with its own metal in
@@ -130,42 +129,13 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 */
 	private static final int[] QUARTZ = {0xFFEBDED4, 0xFFDDCBBE, 0xFFD3C7B9, 0xFFC5B8A9};
 
-	/**
-	 * Inversion is a bubble between the output torch and the panel, carved in the metal's dark
-	 * tone rather than in redstone red: a gate's recipe has no redstone dust in it, and nothing on
-	 * its face may imply an ingredient that is not there.
-	 */
-	private static final String[] GATE_BUBBLE = {".##.", "#..#", ".##."};
-
-	/**
-	 * Top right, clear of everything: the output torch stands over x=7..9 at the front, the inlay
-	 * fills the middle and the signal line runs across the back. It used to sit between the torch
-	 * and the inlay, where the comparator's composition left it no room.
-	 */
-	private static final int GATE_BUBBLE_X = 11;
-	private static final int GATE_BUBBLE_Y = 2;
-
-	/**
-	 * The same bubble as geometry, for a plate with the room for a round one. In units of the
-	 * glyph above — its centre and its radius — so the two forms cannot drift apart.
-	 */
-	private static final double BUBBLE_CX = 13.0;
-	private static final double BUBBLE_CY = 3.5;
-	private static final double BUBBLE_R = 1.75;
-
-	/**
-	 * Two colours per metal, both from that metal's own ingot texture: the colour the metal
-	 * <em>is</em>, and the darker tone the inversion mark is drawn in.
-	 *
-	 * <p>The mark needs its own because the inlay's tones are not dark enough for one: the palest
-	 * of them sits on a plate of {@code #BBBBBB}, and a marker that faint is no marker.
-	 */
-	private static final Map<String, int[]> GATE_METALS = new LinkedHashMap<>();
+	/** What each gate is made of, taken from that metal's own ingot texture. */
+	private static final Map<String, Integer> GATE_METALS = new LinkedHashMap<>();
 
 	static {
-		GATE_METALS.put("and_gate", new int[]{0xFFD4D4D4, 0xFF7E7E7E});
-		GATE_METALS.put("or_gate", new int[]{0xFFC15A36, 0xFF6D3421});
-		GATE_METALS.put("xor_gate", new int[]{0xFFFAD64A, 0xFF752802});
+		GATE_METALS.put("and_gate", 0xFFD4D4D4);
+		GATE_METALS.put("or_gate", 0xFFC15A36);
+		GATE_METALS.put("xor_gate", 0xFFFAD64A);
 	}
 
 	/**
@@ -695,37 +665,25 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		int s = target.scale();
 		Path out = target.out();
 
-		for (Map.Entry<String, int[]> entry : GATE_METALS.entrySet()) {
+		for (Map.Entry<String, Integer> entry : GATE_METALS.entrySet()) {
 			String gate = entry.getKey();
-			int colour = entry.getValue()[0];
-			int mark = entry.getValue()[1];
+			int colour = entry.getValue();
 
 			Map<Integer, Integer> inlay = inlay(colour);
 
 			Map<Character, Integer> metal = new LinkedHashMap<>();
 			metal.put('L', shade(colour, 1.1));
 			metal.put('M', colour);
-			metal.put('D', mark);
 
-			for (String suffix : new String[]{"", "_inverted"}) {
-				BufferedImage plate = readPng(source, "assets/minecraft/textures/block/comparator.png");
-				recolour(plate, inlay, (x, y) -> true);
+			BufferedImage plate = readPng(source, "assets/minecraft/textures/block/comparator.png");
+			recolour(plate, inlay, (x, y) -> true);
+			writePng(out, "textures/block/" + gate + "_top.png", plate);
 
-				if (!suffix.isEmpty() && s == 1) {
-					stamp(plate, GATE_BUBBLE, GATE_BUBBLE_X, GATE_BUBBLE_Y, mark, 0, null, s);
-				} else if (!suffix.isEmpty()) {
-					fineRing(plate, BUBBLE_CX * s, BUBBLE_CY * s, BUBBLE_R * s, s / 2.0, mark);
-				}
-
-				writePng(out, "textures/block/" + gate + "_top" + suffix + ".png", plate);
-
-				if (!target.models()) {
-					continue;
-				}
-
-				// One texture serves every model of this gate: what changes when a signal arrives
-				// is which torches are lit, and a torch is geometry, not paint.
-				gateModels(source, out, gate + suffix, "redstore:block/" + gate + "_top" + suffix);
+			// One texture serves every model of this gate: nothing on the plate ever changes.
+			// What changes when a signal arrives is which torches are lit, and a torch is
+			// geometry, not paint.
+			if (target.models()) {
+				gateModels(source, out, gate, "redstore:block/" + gate + "_top");
 			}
 
 			BufferedImage icon = readPng(source, "assets/minecraft/textures/item/comparator.png");

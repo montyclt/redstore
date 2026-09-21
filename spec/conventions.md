@@ -188,6 +188,7 @@ Key scheme:
 | `gui.redstore.filter.slot_hint` | Filtered item | Ítem filtrado |
 | `message.redstore.clock.mode.square` | Square wave | Onda cuadrada |
 | `message.redstore.clock.mode.pulse` | 1-tick pulse | Pulso de 1 tick |
+| `message.redstore.gate.<mode>` | AND gate … XNOR gate | Puerta AND … Puerta XNOR |
 | `message.redstore.chunk_loader.status` | Chunk [%s, %s] in %s is loaded | El chunk [%s, %s] en %s está cargado |
 | `tooltip.redstore.<block>.1` | What the block is | Qué es el bloque |
 | `tooltip.redstore.<block>.2` | What a click does to it | Qué hace un clic sobre él |

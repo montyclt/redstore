@@ -2,6 +2,8 @@ package net.montyclt.redstore.block.gate;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -163,7 +165,16 @@ public class LogicGateBlock extends DiodeBlock {
 		}
 	}
 
-	/** Right-click toggles the negation, which is the gate's only setting. */
+	/**
+	 * Right-click toggles the negation, which is the gate's only setting.
+	 *
+	 * <p>Nothing on the block shows which way it is set, so the click says so: the gate's name for
+	 * the mode it has just taken, on the action bar, exactly as the clock announces its own. That
+	 * is the same bargain a comparator makes — it changes mode with a click and draws no mark for
+	 * it either — and the two tells a builder has are the same as a comparator's: the sound, and
+	 * the output torch, which on a gate follows the output and so stands lit on a negated gate
+	 * with nothing arriving.
+	 */
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 		BlockState next = state.cycle(INVERTED);
@@ -172,8 +183,15 @@ public class LogicGateBlock extends DiodeBlock {
 		// The answer may have changed, so put the block back through the diode state machine.
 		this.checkTickOnNeighbor(level, pos, next);
 
+		boolean inverted = next.getValue(INVERTED);
 		level.playSound(null, pos, SoundEvents.COMPARATOR_CLICK, SoundSource.BLOCKS, 0.3F,
-				next.getValue(INVERTED) ? 0.55F : 0.5F);
+				inverted ? 0.55F : 0.5F);
+
+		if (player instanceof ServerPlayer serverPlayer) {
+			// true = action bar rather than chat.
+			serverPlayer.sendSystemMessage(Component.translatable(
+					"message.redstore.gate." + this.operation.name(inverted)), true);
+		}
 
 		return InteractionResult.SUCCESS;
 	}

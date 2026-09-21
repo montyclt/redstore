@@ -58,17 +58,12 @@ rule ([plate §10](abstract-redstone-plate.md)). Unlock trigger: `has(Items.IRON
 
 ## 4. Textures
 
-Two 16 × 16 top textures: the comparator's plate with its quartz recoloured to iron, with
-and without the inherited negation bubble.
+One 16 × 16 top texture, `and_gate_top.png`: the comparator's plate with its quartz recoloured to
+iron.
 
-| File | Negation bubble |
-| --- | --- |
-| `and_gate_top.png` | – |
-| `and_gate_top_inverted.png` | yes |
-
-One texture serves every model, because what lights up is the torches, not the plate. Sixteen
-block models — the two textures against the eight lit/unlit combinations of three torches — each
-composed out of vanilla's own comparator models. Sides and bottom reuse
+Nothing on that plate ever changes — not when the gate fires, and not when it is negated — so the
+models differ only in which torches are lit: **eight** of them, one per combination of the three,
+each composed out of vanilla's own comparator models. Sides and bottom reuse
 `minecraft:block/smooth_stone`. The icon is `item/and_gate.png`.
 
 ## 5. Inherited behaviour, for reference

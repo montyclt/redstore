@@ -187,30 +187,24 @@ fall back on, so they are harder to tell apart in the dark, and impossible for a
 distinguish the three metals. Letters were tried and rejected — no vanilla block uses text, and a
 letter never stops looking like a decal — but this is the cost of that decision.
 
-### 6.2 The marker
+### 6.2 Inversion is not marked
 
-Inversion is drawn as a **bubble**: a 4 × 3 ring in the plate's **top right corner**, at x = 11,
-y = 2. It is the standard mark in any logic diagram, carved in the metal rather than in redstone
-red, because a gate's recipe contains no redstone dust and nothing on its face may imply an
-ingredient that is not there (see [plate §10](abstract-redstone-plate.md)).
+**Nothing on the plate says which way the gate is set**, and that is the vanilla answer rather than
+an omission. A comparator changes mode with a click and draws no mark for it: what it gives the
+player is the click's sound and the state of a torch. A gate does the same, and gets a better torch
+out of it — the front one follows the output, so a negated gate with nothing arriving stands there
+lit, which is the tell a redstone torch on an unpowered block gives and is readable across a room.
 
-The corner is the only place it fits. The comparator's composition spends the middle of the plate
-on the inlay, the front on the output torch and the back on the painted line; the bubble sat
-between the torch and the inlay while the plate was the repeater's, and there is no such gap here.
+The click also **says the mode on the action bar**: "NAND gate", the way the clock announces its
+own. A message is not a mark on a block, and that is the point — it costs the face nothing, and it
+is there at the moment the player is asking.
 
-It is drawn in a **fifth** tone, the ingot's darkest, and not in the inlay's own dark one. Iron's
-darkest inlay tone is `#A3A3A3` against a plate of `#BBBBBB`, and a marker that faint is no marker;
-the ingot's `#7E7E7E` reads.
-
-At 16 × 16 it is that 4 × 3 glyph; at any finer resolution it is drawn as a **circle**, centred and
-sized in units of the small design so the two cannot drift. A ring made of four-pixel blocks is
-what a scaled glyph gives, and on a 64 × 64 plate it is the one mark that looks unfinished. See
-[../conventions.md](../conventions.md) §10.2.1.
-
-The mark is not the only thing that says a gate is inverted, and it is the less useful of the two:
-the output torch follows the output, so an inverted gate with no input stands there with its front
-torch lit. That is the same tell a redstone torch on an unpowered block gives, and it is visible
-from further away than a four-pixel ring.
+Earlier drafts drew a **bubble**, the standard mark in any logic diagram, first between the output
+torch and the inlay and then in the plate's top right corner, in the metal's darkest ingot tone. It
+was legible and it was ours: vanilla marks no diode's mode on its face, so the mark was a rule we
+had invented for a family that exists to invent none. It went, and the plate got simpler by a
+texture per gate — the two faces became one, because with no mark there is nothing left that the
+inversion changes.
 
 ### 6.3 What lights up
 
@@ -223,10 +217,11 @@ This is the whole point of the two input flags, and it is worth being clear that
 inversion mark by another name: the flanks say what is arriving, the front says what is leaving,
 and inversion only changes the relationship between them.
 
-The plate's face never changes, so a gate needs **two** top textures — plain and inverted — and
-**sixteen** models: two faces against each of the eight lit/unlit combinations of three torches.
-Forty-eight models and six textures for the three gates, plus one icon each, all produced by the
-`generateAssets` Gradle task. The block state file has 64 variants per gate.
+The plate's face never changes at all, so a gate needs **one** top texture and **eight** models,
+one per lit/unlit combination of its three torches. Twenty-four models and three textures for the
+three gates, plus one icon each, all produced by the `generateAssets` Gradle task. The block state
+file has 32 variants per gate: `inverted` is not among them, because it changes nothing to look
+at.
 
 **Every torch comes from a vanilla model, unmoved.** `comparator.json` holds the three unlit
 torches and `comparator_on_subtract.json` the three lit ones — the second because it is the one
