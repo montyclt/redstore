@@ -235,7 +235,7 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 		try (ProblemReporter.ScopedCollector problems =
 				new ProblemReporter.ScopedCollector(this.problemPath(), Redstore.LOGGER)) {
 			TagValueOutput output = TagValueOutput.createWithContext(problems, registries);
-			output.store("Filter", ItemStack.CODEC, this.getFilterStack());
+			output.store("Filter", ItemStack.OPTIONAL_CODEC, this.getFilterStack());
 
 			return output.buildResult();
 		}
@@ -247,8 +247,10 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 	protected void saveAdditional(ValueOutput output) {
 		super.saveAdditional(output);
 		ContainerHelper.saveAllItems(output, this.items);
-		// TODO(verify 26.3): ValueOutput#store / ValueInput#read for a single ItemStack.
-		output.store("Filter", ItemStack.CODEC, this.getFilterStack());
+		// OPTIONAL_CODEC and not CODEC: an empty filter is the normal state of a hopper nobody has
+		// set yet, and CODEC refuses to encode air — it logs "Item must not be minecraft:air" and
+		// writes nothing, every time the block saves or syncs.
+		output.store("Filter", ItemStack.OPTIONAL_CODEC, this.getFilterStack());
 		output.putBoolean("Blacklist", this.blacklist);
 		output.putBoolean("Strict", this.strict);
 		output.putInt("TransferCooldown", this.transferCooldown);
@@ -258,7 +260,7 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 	protected void loadAdditional(ValueInput input) {
 		super.loadAdditional(input);
 		ContainerHelper.loadAllItems(input, this.items);
-		this.filterContainer.setItem(0, input.read("Filter", ItemStack.CODEC).orElse(ItemStack.EMPTY));
+		this.filterContainer.setItem(0, input.read("Filter", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY));
 		this.blacklist = input.getBooleanOr("Blacklist", false);
 		this.strict = input.getBooleanOr("Strict", false);
 		this.transferCooldown = input.getIntOr("TransferCooldown", -1);
