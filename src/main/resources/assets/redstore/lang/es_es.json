@@ -9,6 +9,7 @@
 	"gui.redstore.filter.strict.off": "Flexible: solo el tipo de ítem",
 	"gui.redstore.filter.strict.short.on": "=",
 	"gui.redstore.filter.strict.short.off": "~",
+	"gui.redstore.filter.slot_hint": "Ítem filtrado",
 	"block.redstore.redstone_clock": "Reloj de redstone",
 	"message.redstore.clock.mode.square": "Onda cuadrada",
 	"message.redstore.clock.mode.pulse": "Pulso de 1 tick",

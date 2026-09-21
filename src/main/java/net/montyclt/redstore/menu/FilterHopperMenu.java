@@ -1,5 +1,6 @@
 package net.montyclt.redstore.menu;
 
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -10,6 +11,7 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import net.montyclt.redstore.Redstore;
 import net.montyclt.redstore.blockentity.FilterHopperBlockEntity;
 import net.montyclt.redstore.registry.RedstoreMenus;
 
@@ -22,6 +24,9 @@ public class FilterHopperMenu extends AbstractContainerMenu {
 	public static final int DATA_COUNT = 2;
 
 	public static final int STORAGE_SLOTS = FilterHopperBlockEntity.CONTAINER_SIZE;
+
+	/** The placeholder the empty filter slot draws: a funnel, in the flat grey of a slot icon. */
+	private static final Identifier FILTER_ICON = Redstore.id("container/slot/filter");
 
 	/**
 	 * Screen coordinates. The three things that make up the filter — the item, the whitelist
@@ -37,7 +42,8 @@ public class FilterHopperMenu extends AbstractContainerMenu {
 
 	private static final int STORAGE_START = 0;
 	private static final int STORAGE_END = STORAGE_START + STORAGE_SLOTS;
-	private static final int FILTER_SLOT = STORAGE_END;
+	/** Public because the screen has to recognise the slot to explain it. */
+	public static final int FILTER_SLOT = STORAGE_END;
 	private static final int INVENTORY_START = FILTER_SLOT + 1;
 	private static final int INVENTORY_END = INVENTORY_START + Inventory.INVENTORY_SIZE;
 
@@ -85,6 +91,11 @@ public class FilterHopperMenu extends AbstractContainerMenu {
 			@Override
 			public boolean mayPlace(ItemStack stack) {
 				return true;
+			}
+
+			@Override
+			public Identifier getNoItemIcon() {
+				return FILTER_ICON;
 			}
 		});
 

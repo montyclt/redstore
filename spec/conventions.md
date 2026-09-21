@@ -185,7 +185,7 @@ Key scheme:
 | `gui.redstore.filter.mode.blacklist` | Blacklist: everything but the filtered item enters | Lista negra: entra todo menos el ítem filtrado |
 | `gui.redstore.filter.strict.on` | Strict: components must match | Estricto: los componentes deben coincidir |
 | `gui.redstore.filter.strict.off` | Loose: item type only | Flexible: solo el tipo de ítem |
-| `gui.redstore.filter.slot_hint` | Filter item | Ítem de filtro |
+| `gui.redstore.filter.slot_hint` | Filtered item | Ítem filtrado |
 | `message.redstore.clock.mode.square` | Square wave | Onda cuadrada |
 | `message.redstore.clock.mode.pulse` | 1-tick pulse | Pulso de 1 tick |
 | `message.redstore.chunk_loader.status` | Chunk [%s, %s] in %s is loaded | El chunk [%s, %s] en %s está cargado |

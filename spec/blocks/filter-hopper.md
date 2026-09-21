@@ -58,7 +58,7 @@ block entity, which vanilla consults on every insertion path. Therefore it appli
 | Index | Slot | Notes |
 | --- | --- | --- |
 | 0–4 | storage | the hopper's 5 slots, filter-checked via `Slot#mayPlace` |
-| 5 | filter | max stack size **1**, accepts anything, never filter-checked |
+| 5 | filter | max stack size **1**, accepts anything, never filter-checked; draws a funnel placeholder while empty |
 | 6–32 | player inventory | |
 | 33–41 | player hotbar | |
 
@@ -103,6 +103,48 @@ slot art at (43, 19). The two toggles are plain vanilla `Button` widgets, which 
 The buttons carry a one-letter label and a tooltip describing the **current** mode
 (`gui.redstore.filter.mode.*`, `gui.redstore.filter.strict.*`), both refreshed every
 `containerTick` from the synced data slots.
+
+#### The empty filter slot
+
+While the slot is empty it draws a **funnel**, through `Slot#getNoItemIcon`, from the sprite
+`redstore:container/slot/filter`. Vanilla ships thirty of these placeholders — a shield, an ingot,
+a sword — and none of them fits, because nothing in vanilla filters. So this one is the mod's own
+drawing, generated from ASCII art by the asset task like every other mark the mod adds
+([../conventions.md](../conventions.md) §10).
+
+Three rules it does follow, and they are not deference to Mojang but the grammar of that corner
+of the screen:
+
+* **16 × 16**, the size of a slot.
+* **An outline, not a silhouette**, and an outline that keeps its hole: vanilla's icons are
+  one-pixel contours, and two walls with no gap between them read as a solid bar, not as a pipe.
+  The spout is therefore four pixels wide, which is also the width of a hopper's own spout, and it
+  closes at the bottom with the two walls stepping in a pixel to meet — the way pixel art draws a
+  curve at this size, and the same way vanilla's shield icon rounds its point.
+* **One flat grey, `#555555`,** darker than the slot's `#8B8B8B`, so the shape reads as engraved
+  into the slot instead of laid on top of it.
+
+At 30 opaque pixels it sits inside vanilla's own range, which runs from 20 for the llama armour to
+72 for the banner pattern.
+
+Vanilla has two families of these and they disagree, which is worth writing down because the
+sprites are the misleading half. The thirty `container/slot/*.png` sprites are flat `#9C9C9C`,
+*lighter* than the slot. The icons a player actually has in mind — the four armour slots and the
+offhand — are not sprites at all: they are painted into `gui/container/inventory.png` in
+`#555555`. This follows those.
+
+It also earns its shape twice over: a funnel is the interface convention for a filter, and it is
+the silhouette of a hopper.
+
+**Hovering the empty slot** shows `gui.redstore.filter.slot_hint`. Vanilla only writes a tooltip
+for a slot that *holds* something, which is backwards here — the slot is at its most puzzling while
+it is empty — so the screen adds one in `extractTooltip` and drops it again as soon as the slot
+fills or the player picks something up. The text is a label and not an explanation — it names what
+belongs in the slot, the way the tooltip on a slot should. What the filter *does* is the block's
+own tooltip and this section's business, not a hover.
+
+A purpose-drawn sheet can replace the compositing later without moving anything: the coordinates
+above are the layout, whoever paints it.
 
 ### 3.3 Synchronisation
 

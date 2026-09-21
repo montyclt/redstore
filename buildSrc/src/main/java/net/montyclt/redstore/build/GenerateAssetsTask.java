@@ -49,6 +49,10 @@ import org.gradle.api.tasks.TaskAction;
  *       the gate's metal set into it, and the repeater's torch copied to three positions.</li>
  * </ul>
  *
+ * <p>One asset is not derived from anything: the funnel the empty filter slot draws. It is ours,
+ * drawn here rather than committed as a PNG so that it stays reviewable in a diff like every other
+ * edit in this file.
+ *
  * <p>See spec/conventions.md section 10.
  */
 public abstract class GenerateAssetsTask extends DefaultTask {
@@ -87,6 +91,20 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	private static final int DIAL_DARK = 0xFF752802;
 
 	private static final int PLATE_GREY = 0xFFA4A7A1;
+
+	/**
+	 * The grey an empty slot's icon is drawn in: darker than the slot's own {@code #8B8B8B}, so
+	 * the shape reads as engraved into the slot rather than laid on top of it. Flat, with no
+	 * second tone anywhere — that flatness is what says <i>placeholder</i> and not <i>item</i>.
+	 *
+	 * <p>Vanilla has two families here and they disagree. The thirty sprites under
+	 * {@code container/slot/} are flat {@code #9C9C9C} (or one of #808080, #838383, #ABABAB,
+	 * #B9B9B9), which is <em>lighter</em> than the slot. But the icons every player actually
+	 * pictures — the four armour slots and the offhand — are not sprites at all: they are painted
+	 * into {@code gui/container/inventory.png}, in {@code #555555}. This follows those, because
+	 * they are the ones a player has seen ten thousand times.
+	 */
+	private static final int SLOT_ICON_GREY = 0xFF555555;
 
 	// ---------------------------------------------------------------- glyphs
 
@@ -161,6 +179,42 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	private static final int ICON_DIAL_X = 5;
 	private static final int ICON_DIAL_Y = 8;
 
+	/**
+	 * A funnel, for the filter slot. Vanilla has no icon for this and would not: nothing in the
+	 * game filters. The funnel is the universal interface symbol for it, and it happens to be the
+	 * silhouette of a hopper, so it is the mod's own drawing and still says what the block is.
+	 *
+	 * <p>It is an <b>outline</b>, because that is what vanilla's slot icons are: a shield, an
+	 * ingot or a shovel there is a one-pixel contour, never a filled shape. At 30 opaque pixels
+	 * this sits in vanilla's own range, which runs from 20 (llama armor) to 72 (banner pattern).
+	 *
+	 * <p>The spout is four pixels wide and not two, which is the width of a hopper's own spout in
+	 * its model, and the reason is that a contour needs a hole. Two walls with nothing between
+	 * them are not a pipe seen from outside, they are a solid bar — the shape stops reading as an
+	 * outline exactly where it matters most.
+	 *
+	 * <p>It closes at the bottom, with the two walls stepping in by a pixel to meet. That single
+	 * step is how pixel art of this size draws a curve — vanilla's own shield icon rounds its
+	 * point the same way — and a closed contour is what keeps the eye reading a shape rather than
+	 * two loose lines.
+	 */
+	private static final String[] GLYPH_FUNNEL = {
+			"############",
+			"#..........#",
+			".#........#.",
+			"..#......#..",
+			"...#....#...",
+			"....#..#....",
+			"....#..#....",
+			"....#..#....",
+			"....#..#....",
+			".....##....."};
+	private static final int FUNNEL_X = 2;
+	private static final int FUNNEL_Y = 3;
+
+	/** Every GUI sprite is 16 x 16, the size of a slot. */
+	private static final int SPRITE_SIZE = 16;
+
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	@InputFile
@@ -174,6 +228,8 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		Path out = getOutputDirectory().get().getAsFile().toPath().resolve("assets/redstore");
 		Files.createDirectories(out);
 
+		filterSlotIcon(out);
+
 		try (ZipFile jar = new ZipFile(getMinecraftJar().get().getAsFile())) {
 			filterHopper(jar, out);
 			redstoneClock(jar, out);
@@ -182,6 +238,19 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	}
 
 	// ---------------------------------------------------------------- blocks
+
+	/**
+	 * The placeholder the empty filter slot draws, in the same flat grey as vanilla's own.
+	 *
+	 * <p>Nothing is read from the jar here. It is drawn on an empty sprite, which is why the glyph
+	 * is the whole of it.
+	 */
+	private void filterSlotIcon(Path out) throws IOException {
+		BufferedImage icon = new BufferedImage(SPRITE_SIZE, SPRITE_SIZE, BufferedImage.TYPE_INT_ARGB);
+		stamp(icon, GLYPH_FUNNEL, FUNNEL_X, FUNNEL_Y, SLOT_ICON_GREY, 0, null);
+
+		writePng(out, "textures/gui/sprites/container/slot/filter.png", icon);
+	}
 
 	private void filterHopper(ZipFile jar, Path out) throws IOException {
 		BufferedImage top = readPng(jar, "assets/minecraft/textures/block/hopper_top.png");

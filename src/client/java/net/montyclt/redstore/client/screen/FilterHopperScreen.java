@@ -18,6 +18,9 @@ import net.montyclt.redstore.menu.FilterHopperMenu;
 public class FilterHopperScreen extends AbstractContainerScreen<FilterHopperMenu> {
 	private static final Identifier BACKGROUND = Identifier.withDefaultNamespace("textures/gui/container/hopper.png");
 
+	/** What the funnel placeholder means, for a slot that behaves like no other slot in the game. */
+	private static final Component FILTER_HINT = Component.translatable("gui.redstore.filter.slot_hint");
+
 	/** A slot frame inside the vanilla hopper sheet, so we can stamp our own wherever we want. */
 	private static final int SLOT_FRAME_U = 43;
 	private static final int SLOT_FRAME_V = 19;
@@ -47,6 +50,23 @@ public class FilterHopperScreen extends AbstractContainerScreen<FilterHopperMenu
 		// imageWidth/imageHeight are final in 26.3; they come in through the constructor.
 		super(menu, inventory, title, WIDTH, HEIGHT);
 		this.inventoryLabelY = this.imageHeight - 94;
+	}
+
+	/**
+	 * Vanilla only writes a tooltip for a slot that holds something, which is exactly backwards
+	 * here: the filter slot is at its most puzzling while it is empty. So the hint is drawn for
+	 * the empty slot, and dropped again as soon as it holds an item or the player is carrying one.
+	 */
+	@Override
+	protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		super.extractTooltip(graphics, mouseX, mouseY);
+
+		if (this.hoveredSlot != null
+				&& this.hoveredSlot.index == FilterHopperMenu.FILTER_SLOT
+				&& !this.hoveredSlot.hasItem()
+				&& this.menu.getCarried().isEmpty()) {
+			graphics.setTooltipForNextFrame(this.font, FILTER_HINT, mouseX, mouseY);
+		}
 	}
 
 	@Override
