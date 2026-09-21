@@ -9,6 +9,12 @@ and tags all come from there and are not repeated here.
 
 **Subclasses:** [and-gate.md](and-gate.md) · [or-gate.md](or-gate.md) · [xor-gate.md](xor-gate.md)
 
+**In Java a gate extends vanilla's `DiodeBlock`**, because a gate *is* a diode: a flat plate that
+reads redstone, waits a tick and emits from its front. The spec hierarchy and the Java hierarchy
+part company here — the plate above is a spec, not a base class — and §9 sets out what that
+inheritance supplies and what follows from it. Several things a builder can rely on, including the
+strength of the output below, are consequences of it rather than rules this mod wrote.
+
 ## 1. Inputs and output
 
 A gate has **two inputs, both on side faces**, and one output at the front. The back face is not an
@@ -39,6 +45,20 @@ int b = readFace(level, pos, facing.getClockWise());
 All three operations are commutative, so A and B are interchangeable; the names exist only for
 documentation.
 
+### 1.1 The output is strong
+
+A gate **strongly powers the block it faces**, exactly as a repeater or a comparator powers its
+target. The consequence is the one builders care about: put a solid block in front of a gate and
+that block becomes a power source in its own right, so dust running along it carries the signal,
+and a piston, door, lamp or dropper touching it fires. Driving a piston straight off a gate needs
+no repeater in between.
+
+A weak output would have made the gates second-class next to the vanilla components they sit
+beside, and it is not what this mod would have chosen — it simply comes with being a real diode
+(§9). [abstract-redstone-plate.md](abstract-redstone-plate.md) §5 states the same rule for the
+whole plate family, and §5.1 there records the one cosmetic wart it brings: dust draws itself as
+connected to a gate's unused faces even though nothing ever comes out of them.
+
 ## 2. Evaluation contract
 
 Each gate defines one pure predicate of its two inputs, and the block applies the inversion:
@@ -67,13 +87,16 @@ and because carrying it doubled the click cycle for everyone. The three variants
 
 * Fixed delay of **1 redstone tick = 2 game ticks**, like a repeater on its minimum setting. There
   is no delay setting on a gate.
-* On any `neighborChanged`, `onPlace` or state toggle, the gate recomputes its target output; if it
-  differs from the current `power` and no tick is pending, it schedules one at 2 game ticks.
-* `tick` recomputes from scratch and writes the result with `Block.UPDATE_ALL`. If the recomputed
-  value equals the current one, nothing is written.
+* Scheduling is vanilla's, not ours: on any neighbour change, placement or click the block goes
+  through `checkTickOnNeighbor`, which compares the answer with the current output and schedules a
+  tick at the delay when they differ and nothing is already due. The tick priorities that make
+  diodes resolve deterministically against each other come with it.
 * Consequences, all intentional: gates cannot produce 0-tick pulses, a chain of *n* gates takes
-  *n* redstone ticks, a loop of gates oscillates at a stable frequency instead of locking up the
-  scheduler, and pulses shorter than the delay are swallowed exactly as a repeater swallows them.
+  *n* redstone ticks, and a loop of gates oscillates at a stable frequency instead of locking up
+  the scheduler.
+* **A pulse shorter than the delay is not lost.** The gate turns on and schedules its own turn-off,
+  so the output is one full delay long however brief the input was — a repeater does exactly this,
+  and a gate does it for the same reason: it is the same state machine.
 * **Vanilla equivalent:** any of the six gates is a torch-and-repeater assembly of at least 3 × 3,
   and none of them is faster than this.
 
