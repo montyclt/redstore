@@ -140,6 +140,25 @@ public abstract class RedstonePlateBlock extends HorizontalDirectionalBlock {
 		return this.getSignal(state, level, pos, direction);
 	}
 
+	/**
+	 * Dust connects to the output face and to nothing else.
+	 *
+	 * <p>Vanilla's default is to let dust connect to every side of anything that emits a signal,
+	 * which on a plate draws a wire into faces that never carry one. A repeater carries the same
+	 * override, for its own pair of useful faces; it lives on {@code BlockBehaviour}, not on
+	 * {@code DiodeBlock}, so each block states its own answer.
+	 *
+	 * <p>The convention is the one {@link #getSignal} already uses: {@code direction} runs from the
+	 * asking block towards this one, so the front face is {@code direction == FACING}.
+	 *
+	 * <p>A subclass that reads dust from another face has to widen this, or a builder will wire a
+	 * signal the block silently ignores.
+	 */
+	@Override
+	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+		return direction == state.getValue(FACING);
+	}
+
 	// ------------------------------------------------------------------ interaction
 
 	@Override

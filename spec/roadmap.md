@@ -57,8 +57,6 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 ## Phase 6 — Polish
 
 * `/redstore loaders list`, to find every loader a dimension holds.
-* Optional mixin into `RedStoneWireBlock#shouldConnectTo` so dust does not visually connect to a
-  gate's unused back face.
 * `BlockEntityRenderer` showing the filter item on the filter hopper's sides.
 * Emissive overlay on the chunk loader core.
 * In-game documentation pass: item tooltips summarising each block's rules.

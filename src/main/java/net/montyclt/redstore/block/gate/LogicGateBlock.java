@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DiodeBlock;
@@ -82,6 +83,24 @@ public class LogicGateBlock extends DiodeBlock {
 		int b = level.getControlInputSignal(pos.relative(right), right, false);
 
 		return this.operation.test(a, b) != state.getValue(INVERTED);
+	}
+
+	/**
+	 * Dust connects to the two inputs and the output, and not to the back.
+	 *
+	 * <p>Vanilla's default is to let dust connect to every side of anything that emits a signal.
+	 * On a gate that draws a wire into the one face which neither reads nor emits, suggesting an
+	 * input that does not exist. {@code RepeaterBlock} overrides this for the same reason, and
+	 * {@code DiodeBlock} does not carry the override, because a repeater's two useful faces are
+	 * not a gate's three.
+	 *
+	 * <p>The convention is the one {@code getSignal} uses: {@code direction} runs from the asking
+	 * block towards this one, so the back — {@code FACING} in vanilla's diode convention — is
+	 * {@code direction == FACING.getOpposite()}.
+	 */
+	@Override
+	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+		return direction != null && direction != state.getValue(FACING).getOpposite();
 	}
 
 	/** Right-click toggles the negation, which is the gate's only setting. */

@@ -139,12 +139,29 @@ to do.
   on top of it lights up.
 * No other face ever emits a signal.
 
-### 5.1 Known cosmetic wart
+### 5.1 What dust connects to
 
-Redstone dust connects visually to any block whose `isSignalSource()` is true, so dust placed
-against a plate's unused faces (a gate's back, a clock's sides) will draw itself as connected while
-never carrying a signal. Suppressing it needs a mixin into `RedStoneWireBlock#shouldConnectTo`,
-which is listed as optional polish in [../roadmap.md](../roadmap.md).
+By default, redstone dust connects to every side of anything whose `isSignalSource()` is true, so
+it would draw itself into a plate's unused faces — a gate's back, a clock's sides — and claim an
+input that is not there. It is not only a picture: a wire delivers its signal to the neighbours it
+is *connected* to, so a face that looks wired and is not would be a wire the builder can see and
+the circuit cannot.
+
+Vanilla answers this per block, with `BlockBehaviour#shouldRedstoneWireConnectTo(BlockState,
+BlockGetter, BlockPos, Direction)`, which `RepeaterBlock` overrides for exactly this reason. Each
+Redstore block states its own answer:
+
+| Block | Dust connects to |
+| --- | --- |
+| A plate (the clock) | its output face, and nothing else |
+| A gate | its two inputs and its output, but never its back |
+
+`direction` runs from the asking block towards this one, which is the convention `getSignal`
+already uses, so the output face is `direction == FACING` in both.
+
+A gate does not inherit the plate's answer — it is a diode, and `DiodeBlock` carries no override —
+so it states its own. An earlier draft of this spec called for a mixin into the wire block; 26.3
+needs none.
 
 ## 6. Timing principle
 
