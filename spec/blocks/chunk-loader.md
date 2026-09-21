@@ -42,8 +42,23 @@ the **README**, in full.
   leaves working and which it does not; the short version is that an iron farm works and a dark
   room does not.
 * Weather, time and random ticks behave exactly as in a chunk a player is standing in.
-* The block does not extend the *entity ticking* border beyond its own chunk, so contraptions that
-  straddle a chunk border need a loader on each side.
+* **The reach is not one chunk, and it is not uniform.** A ticket's level rises by one per chunk of
+  distance, so a `FORCED` ticket at level 31 leaves the eight chunks around it at 32 — and
+  `ChunkLevel.isEntityTicking` is `level ≤ 31` while `isBlockTicking` is `level ≤ 32`:
+
+  | Where | Level | What runs |
+  | --- | --- | --- |
+  | The loader's own chunk | 31 | Everything: block entities, redstone, random ticks **and entities**. |
+  | The eight chunks around it | 32 | Block entities, scheduled and random ticks, ice and snow. **Entities do not tick** — they are loaded and frozen. |
+  | Anything further | 33+ | Loaded and readable. Nothing ticks. |
+
+  So a furnace, a hopper or a crop farm just over the border keeps working on one loader, and only
+  a machine that moves **entities** across the border — items, minecarts, mobs — needs a loader on
+  each side. §10.4 is where that bites in practice.
+
+  The gates are `LevelChunk#isTicking`, which requires `BLOCK_TICKING` before a block entity is
+  ticked, and `ChunkMap#forEachBlockTickingChunk`, which is what drives `ServerLevel#tickChunk` and
+  with it the random ticks.
 
 ### 1.2 Why a switch, when nothing else here has one
 
@@ -409,8 +424,10 @@ it is actively harmful to the server.
    128 blocks away. (With nobody in the dimension, `getNearestPlayer` returns null and nothing
    despawns.)
 3. Villagers never despawn, so that half of the farm is safe regardless.
-4. A contraption crossing a chunk border needs a loader per chunk; `/forceload query` (or
-   `/redstore loaders list`) is the way to check.
+4. A contraption crossing a chunk border needs a second loader **only if entities cross it**. Blocks
+   tick for one chunk further out (§1.1), so a furnace, a hopper or a farm over the border is
+   already covered; an item, a minecart or a mob over the border is not. `/forceload query` (or
+   `/redstore loaders list`) is the way to check what is actually held.
 
 ## 11. What 26.3 actually provides
 

@@ -21,17 +21,20 @@ limits.
 | **Filter hopper** | A hopper with one extra filter slot, plus whitelist/blacklist and strict/loose matching. The filter governs what may *enter*; whatever is inside can always leave. |
 | **Chunk loader** | Keeps its own chunk force-loaded and fully ticking, across restarts, with nobody nearby. An enchanting table with an ender pearl where the book goes. Right-click switches it off and on; the pearl is there when it is working. |
 
-### What a chunk loader does not do
+### What a chunk loader does, and does not do
 
 It uses the same force-loading vanilla's own `/forceload` uses, so it inherits vanilla's rules, and
-one of them surprises people:
+two of them surprise people:
 
 * **A force-loaded chunk is not a player.** Everything the game gates on a player being nearby stays
   gated: **no natural mob spawning and no monster spawners**. A dark room does not run. Everything
   driven by entity AI, block entities or random ticks does run, so an iron farm, a crop farm, a
   smelter or a hopper clock all keep going.
-* It loads **its own chunk** and no more, so a contraption straddling a chunk border needs one on
-  each side.
+* **It reaches one chunk further than you would think, but not for everything.** In its own chunk
+  everything runs. In the eight chunks around it, *blocks* run — furnaces, hoppers, redstone,
+  crops — but *entities* are frozen: dropped items do not fall, minecarts and mobs do not move.
+  Past that, nothing runs. So a machine crossing a chunk border usually needs no second loader;
+  one that carries items or minecarts across does.
 * Weather, time and random ticks behave exactly as in a chunk you are standing in.
 
 ## Requirements
