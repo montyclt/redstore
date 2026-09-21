@@ -54,9 +54,10 @@ The build also derives the mod's textures from your own copy of the game; see be
 ## Layout
 
 ```
-spec/     the design, written before the code — see spec/README.md
-src/      the mod; client-only classes live in src/client
-buildSrc/ the generateAssets task, which derives the art from the vanilla jar
+spec/                 the design, written before the code — see spec/README.md
+src/                  the mod; client-only classes live in src/client
+src/main/generated/   written by ./gradlew runDatagen — recipes, loot, tags, block states
+buildSrc/             the generateAssets task, which derives the art from the vanilla jar
 ```
 
 ### The spec

@@ -6,7 +6,8 @@ Phases are ordered so that each one leaves the mod in a playable, shippable stat
 
 * Gradle build with Loom 1.17 / Gradle 9.6.0 / Java 25, no remapping.
 * `fabric.mod.json`, `Redstore` + `RedstoreClient` entry points, `Redstore.id(...)` helper.
-* Empty registry holder classes, creative tab, datagen entry point.
+* Empty registry holder classes and the creative tab hook.
+* The datagen entry point and its providers; see [conventions.md](conventions.md) §11.
 * The derived-asset pipeline, `generateAssets`; see [conventions.md](conventions.md) §10.
 * **Done when:** the mod loads on a dedicated server and a client and shows an empty creative tab.
 

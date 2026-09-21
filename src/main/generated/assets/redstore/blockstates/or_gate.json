@@ -1,0 +1,124 @@
+{
+  "variants": {
+    "facing=east,input_left=false,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate",
+      "y": 270
+    },
+    "facing=east,input_left=false,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_on",
+      "y": 270
+    },
+    "facing=east,input_left=false,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_right",
+      "y": 270
+    },
+    "facing=east,input_left=false,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_right_on",
+      "y": 270
+    },
+    "facing=east,input_left=true,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate_left",
+      "y": 270
+    },
+    "facing=east,input_left=true,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_left_on",
+      "y": 270
+    },
+    "facing=east,input_left=true,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_left_right",
+      "y": 270
+    },
+    "facing=east,input_left=true,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_left_right_on",
+      "y": 270
+    },
+    "facing=north,input_left=false,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate",
+      "y": 180
+    },
+    "facing=north,input_left=false,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_on",
+      "y": 180
+    },
+    "facing=north,input_left=false,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_right",
+      "y": 180
+    },
+    "facing=north,input_left=false,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_right_on",
+      "y": 180
+    },
+    "facing=north,input_left=true,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate_left",
+      "y": 180
+    },
+    "facing=north,input_left=true,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_left_on",
+      "y": 180
+    },
+    "facing=north,input_left=true,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_left_right",
+      "y": 180
+    },
+    "facing=north,input_left=true,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_left_right_on",
+      "y": 180
+    },
+    "facing=south,input_left=false,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate"
+    },
+    "facing=south,input_left=false,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_on"
+    },
+    "facing=south,input_left=false,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_right"
+    },
+    "facing=south,input_left=false,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_right_on"
+    },
+    "facing=south,input_left=true,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate_left"
+    },
+    "facing=south,input_left=true,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_left_on"
+    },
+    "facing=south,input_left=true,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_left_right"
+    },
+    "facing=south,input_left=true,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_left_right_on"
+    },
+    "facing=west,input_left=false,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate",
+      "y": 90
+    },
+    "facing=west,input_left=false,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_on",
+      "y": 90
+    },
+    "facing=west,input_left=false,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_right",
+      "y": 90
+    },
+    "facing=west,input_left=false,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_right_on",
+      "y": 90
+    },
+    "facing=west,input_left=true,input_right=false,powered=false": {
+      "model": "redstore:block/or_gate_left",
+      "y": 90
+    },
+    "facing=west,input_left=true,input_right=false,powered=true": {
+      "model": "redstore:block/or_gate_left_on",
+      "y": 90
+    },
+    "facing=west,input_left=true,input_right=true,powered=false": {
+      "model": "redstore:block/or_gate_left_right",
+      "y": 90
+    },
+    "facing=west,input_left=true,input_right=true,powered=true": {
+      "model": "redstore:block/or_gate_left_right_on",
+      "y": 90
+    }
+  }
+}

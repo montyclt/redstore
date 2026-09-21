@@ -9,7 +9,8 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": ["net.montyclt.redstore.Redstore"],
-		"client": ["net.montyclt.redstore.RedstoreClient"]
+		"client": ["net.montyclt.redstore.RedstoreClient"],
+		"fabric-datagen": ["net.montyclt.redstore.datagen.RedstoreDataGenerator"]
 	},
 	"depends": {
 		"fabricloader": ">=0.19.5",

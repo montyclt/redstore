@@ -10,6 +10,15 @@ base {
 	archivesName = project.archives_base_name
 }
 
+// The data files — recipes, their unlock advancements, loot tables, tags and block states — are
+// written by the mod itself, into src/main/generated. Run ./gradlew runDatagen. The client flag is
+// there because block state generation lives in the client half of the game.
+fabricApi {
+	configureDataGeneration {
+		client = true
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 

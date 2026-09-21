@@ -16,5 +16,8 @@
 # Logs
 *.log
 
+# Datagen's hash cache: it changes on every run and the jar excludes it anyway.
+/src/main/generated/.cache/
+
 # Scratch space: screenshots, notes, anything handed over in passing.
 /.nocommit/

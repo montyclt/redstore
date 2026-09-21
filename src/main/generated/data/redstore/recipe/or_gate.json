@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "M": "minecraft:copper_ingot",
+    "S": "minecraft:smooth_stone",
+    "T": "minecraft:redstone_torch"
+  },
+  "pattern": [
+    " T ",
+    "TMT",
+    "SSS"
+  ],
+  "result": {
+    "id": "redstore:or_gate"
+  }
+}
