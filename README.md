@@ -9,9 +9,9 @@ torch-and-repeater assembly in one cell; the filter hopper is the classic compar
 the chunk loader is an ender pearl stasis chamber without the pearl. The mod removes tedium, not
 limits.
 
-> **Status: early, unreleased.** Five blocks are implemented and playable in a development
-> client. The chunk loader is specified but not written. The mod ID `redstore` is a working
-> codename and the public name is not settled.
+> **Early and unreleased.** The three gates, the clock and the filter hopper are written; the
+> chunk loader is specified but not. The mod ID `redstore` is a working codename and the public
+> name is not settled.
 
 ## What it adds
 

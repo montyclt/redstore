@@ -2,24 +2,12 @@
 
 Phases are ordered so that each one leaves the mod in a playable, shippable state.
 
-**Status, 2026-09-20.** Phases are being taken out of order, at the project owner's request, so
-that each block can be tried in game before the next one starts.
-
-* **Phase 0** — done. Gradle/Loom build against 26.3, both entry points, registry classes.
-* **Phase 4, filter hopper** — done and visually verified in game. Textures, menu, filtering,
-  ported `ejectItems`.
-* **Phase 3, redstone clock** — implemented and verified in game.
-* **Phase 1, the logic gates** — implemented, compiles, not yet verified in game. Digital only:
-  phase 2 was built and then withdrawn, and is parked in [ideas/](ideas/).
-* **`generateAssets`** — the derived-asset pipeline, now a Gradle task in `buildSrc/`; see
-  [conventions.md](conventions.md) §10.
-* Still to come: the chunk loader (phase 5), the server config, datagen, and the polish list.
-
 ## Phase 0 — Skeleton
 
 * Gradle build with Loom 1.17 / Gradle 9.6.0 / Java 25, no remapping.
 * `fabric.mod.json`, `Redstore` + `RedstoreClient` entry points, `Redstore.id(...)` helper.
 * Empty registry holder classes, creative tab, datagen entry point.
+* The derived-asset pipeline, `generateAssets`; see [conventions.md](conventions.md) §10.
 * Config record, codec, loader and `/redstore reload`.
 * **Done when:** the mod loads on a dedicated server and a client and shows an empty creative tab.
 
@@ -65,8 +53,6 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 * **Done when:** a hopper clock in a loader's chunk keeps running with no player in the dimension,
   survives a full server restart, and breaking the block stops it — while an unrelated
   `/forceload`ed chunk is left untouched.
-* Run the empirical checklist in [blocks/chunk-loader.md](blocks/chunk-loader.md) §10.5 (iron farm
-  runs, dark room does not) and fold the results into the mod description.
 
 ## Phase 6 — Polish
 

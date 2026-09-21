@@ -1,6 +1,5 @@
 # Redstore — Project Specification
 
-> **Status:** design specification, no code written yet.
 > **Codename:** `Redstore` (working name; the final public name is undecided — see [conventions.md](conventions.md)).
 > **Target:** Minecraft **26.3**, Fabric, server + client.
 

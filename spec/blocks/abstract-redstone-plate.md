@@ -288,9 +288,9 @@ A concrete plate spec is complete when it answers all of these:
 | 9 | Any tag beyond `redstore:redstone_plates` |
 | 10 | Any config key that gates one of its modes |
 
-## 14. API verification status (26.3), shared
+## 14. What 26.3 provides, shared
 
-Confirmed by compiling: `HorizontalDirectionalBlock.FACING`, `Block.box`,
+Confirmed against the decompiled jar: `HorizontalDirectionalBlock.FACING`, `Block.box`,
 `Block.canSupportRigidBlock`, `SignalGetter#getControlInputSignal(BlockPos, Direction, boolean)`,
 `Level#scheduleTick(BlockPos, Block, int)`, `Level#getBlockTicks().hasScheduledTick`,
 `useWithoutItem`, `tick(BlockState, ServerLevel, BlockPos, RandomSource)`,

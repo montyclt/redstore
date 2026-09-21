@@ -188,7 +188,9 @@ Unlock trigger: `has(Items.ENDER_EYE)`.
 ## 10. Notes and considerations — what runs unattended
 
 This section exists because "the chunk is loaded" is not the same question as "does my farm run".
-It is reference material for the mod description and for the server's own documentation.
+It is reference material for the mod description and for the server's own documentation. Every
+claim in it is read off vanilla's own code, cited where it matters, since the spawning and ticket
+paths have moved repeatedly across the 1.21.x → 26.x line.
 
 ### 10.1 Two different systems create mobs
 
@@ -237,7 +239,7 @@ of the entity tick), the drops appear, and the hoppers move the iron (block enti
 | Crop, bamboo, sugar cane, kelp, dripstone, ice | Yes | Random ticks. |
 | Smelters, item sorters, storage systems, redstone clocks | Yes | Block entities and scheduled ticks. |
 | Mob grinders on existing mobs (guardian-less, trapped mobs) | Yes | Entity AI. |
-| Nether portal zombified piglin farms | Probably — random tick on the portal block | Verify empirically; no player check in the portal's random tick. |
+| Nether portal zombified piglin farms | Probably — random tick on the portal block | No player check in the portal's random tick, but the spawn path is not traced here. |
 | Dark room / general hostile mob farms | **No** | Natural spawning (§10.1 A). |
 | Monster spawner (dungeon, trial) farms | **No** | `BaseSpawner` requires a player within 16 blocks. |
 | Guardian / raid / wandering trader farms | **No** | All player-gated. |
@@ -262,19 +264,6 @@ it is actively harmful to the server.
 3. Villagers never despawn, so that half of the farm is safe regardless.
 4. A contraption crossing a chunk border needs a loader per chunk; `/forceload query` (or
    `/redstore loaders list`) is the way to check.
-
-### 10.5 To verify empirically before release
-
-Every claim in §10.1–§10.4 is read off vanilla behaviour and must be confirmed on a 26.3 test
-server, since the spawning and ticket code has moved repeatedly across the 1.21.x → 26.x line:
-
-- [ ] An iron farm on a single loader produces iron with no player in the dimension.
-- [ ] A dark room on a loader produces nothing with no player in the dimension.
-- [ ] A dark room on a loader produces nothing, but does consume mob cap, with a player online
-      elsewhere in the dimension.
-- [ ] A golem spawning near the chunk border freezes as predicted (and therefore how much margin
-      to recommend).
-- [ ] A monster spawner in a loaded chunk stays inactive.
 
 ## 11. API verification checklist (26.3)
 

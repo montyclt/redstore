@@ -77,6 +77,18 @@ Worth writing down because it cost a bug: in 26.3 a diode's `FACING` is the dire
 `FACING`, because that parameter points from the powered block back towards the diode. The plate
 base class inherits both conventions verbatim, so anything written against it must too.
 
+### 2.3 A restart can ride the pending tick
+
+Stopping does not cancel the scheduled tick; it lets it fire, see the block locked and decline to
+reschedule. Starting, in turn, schedules nothing if a tick is already pending. So a clock that is
+released *before* that pending tick fires resumes on it rather than on a fresh one, and its first
+ON phase is only as long as whatever was left of it — up to one phase short.
+
+This is the cheap reading of "the phase resets" above, and it is deliberate: the alternative is
+storing the phase in the block state and paying for it in block states and in code. It is written
+down rather than hidden because a builder timing a machine off the first pulse after a lever will
+meet it. Whether it is worth fixing is open.
+
 ## 3. Period and modes
 
 The setting **N ∈ {1, 2, 3, 4}** always means the same thing: **the period is 2N redstone ticks**
@@ -295,10 +307,9 @@ public class RedstoneClockBlock extends RedstonePlateBlock {
 Beyond the inherited overrides, the clock overrides `neighborChanged` (start/stop on the back
 input), `onPlace` and `tick`.
 
-## 10. API verification status (26.3)
+## 10. What 26.3 actually provides
 
-**Compiled against Minecraft 26.3 on 2026-09-20.** Findings beyond those already recorded in
-[filter-hopper.md](filter-hopper.md) §8:
+Beyond what [filter-hopper.md](filter-hopper.md) §8 already records:
 
 | Expectation | What 26.3 actually does |
 | --- | --- |
@@ -313,16 +324,3 @@ Confirmed as written: `HorizontalDirectionalBlock.FACING`, `BlockStateProperties
 `SignalGetter#getControlInputSignal(BlockPos, Direction, boolean)`,
 `Level#scheduleTick(BlockPos, Block, int)`, `Level#getBlockTicks().hasScheduledTick(BlockPos, T)`,
 `SoundEvents.COMPARATOR_CLICK`, and that a plate needs no `codec()`.
-
-Still to verify in game:
-
-- [ ] That each of the four settings measures the same period as the equivalent vanilla repeater
-      loop, in both modes.
-- [ ] That a signal on the back stops it instantly and releasing it starts a full ON phase.
-- [ ] The one known timing wrinkle: if the clock is stopped and released again *before* its pending
-      tick fires, it resumes on that pending tick rather than on a freshly scheduled one, so the
-      first phase after the restart can be up to one phase short. Decide whether that is worth
-      fixing with a stored phase.
-- [ ] That scheduled ticks survive a chunk unload and reload, so a clock in an unloaded chunk
-      resumes instead of freezing permanently.
-- [ ] That the glyph is legible at real scale and lands on the strip the torch does not cover.

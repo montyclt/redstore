@@ -275,10 +275,10 @@ public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side)
 `getTicker`, `useWithoutItem` to open our menu, and the removal hook to drop the filter item
 alongside the contents.
 
-## 8. API verification status (26.3)
+## 8. What 26.3 actually provides
 
-**Compiled successfully against Minecraft 26.3 on 2026-09-20**, so the implemented parts of this
-spec are no longer guesses. Findings worth recording, all confirmed by decompiling the real jar:
+Read off the decompiled jar, and recorded here because several of them contradict what the API
+looked like one version earlier:
 
 | Expectation in an earlier draft | What 26.3 actually does |
 | --- | --- |
@@ -299,11 +299,3 @@ Confirmed as written: `Identifier`, `BlockItemId.create`, the two-overload block
 `HopperBlock#affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean)`,
 `MenuScreens.register`, and the screen's `extractBackground(GuiGraphicsExtractor, …)` with
 `RenderPipelines.GUI_TEXTURED`.
-
-Still unverified, because compiling proves nothing about them — they need the game running:
-
-- [ ] That the block renders as a vanilla hopper from the blockstate and item model JSON.
-- [ ] That the filter actually blocks every insertion path listed in §2.1.
-- [ ] That the ported transfer logic matches vanilla throughput (1 item per 8 game ticks) and
-      behaves identically at chest/minecart/double-chest edges.
-- [ ] That the two buttons round-trip through `clickMenuButton` and re-sync to every viewer.
