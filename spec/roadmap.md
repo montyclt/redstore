@@ -62,6 +62,19 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 * Emissive overlay on the chunk loader core.
 * README, screenshots, Modrinth page.
 
+## Phase 7 — Automated tests
+
+* JUnit for the colour arithmetic in `buildSrc`, the derived-asset pipeline, the gate operations,
+  the filter's matching rule, the chunk loader's bookkeeping and the translation keys.
+* Game tests for everything with a tick in it: the truth tables and the delay, the clock's period
+  and its lock, every insertion path of the filter hopper, and the chunk loader's ticket record.
+* The full list, and the reasoning behind what goes where, is [testing.md](testing.md).
+* **Done when:** `./gradlew runGametest` passes from a clean checkout and writes its report, and
+  the JUnit suite runs in the same build.
+
+Note that the phase 5 acceptance check above is deliberately **not** part of this. No game test can
+restart a server or empty a dimension of players.
+
 ## Explicit non-goals
 
 The mod stays inside its design philosophy. These are deliberately **not** planned:

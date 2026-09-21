@@ -55,6 +55,7 @@ block, so that contraptions stay readable and compact.
 | [README.md](README.md) | This overview and index. |
 | [conventions.md](conventions.md) | Toolchain, versions, package layout, naming, datagen, translations, creative tab. |
 | [roadmap.md](roadmap.md) | Implementation phases and explicit non-goals. |
+| [testing.md](testing.md) | The test suite: what is a game test, what is a unit test, and what cannot be tested at all. |
 | [ideas/](ideas/) | Parked ideas: one file each, none of them committed to. |
 | [blocks/abstract-redstone-plate.md](blocks/abstract-redstone-plate.md) | **Abstract.** What every flat plate component shares: form, orientation, signal reading rule, output, interaction grammar, model template, recipe principle. |
 | [blocks/abstract-logic-gate.md](blocks/abstract-logic-gate.md) | **Abstract.** What the three gates share: two side inputs, evaluation contract, inversion, timing, states, models. |
