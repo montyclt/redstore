@@ -104,9 +104,6 @@ The buttons carry a one-letter label and a tooltip describing the **current** mo
 (`gui.redstore.filter.mode.*`, `gui.redstore.filter.strict.*`), both refreshed every
 `containerTick` from the synced data slots.
 
-A purpose-drawn sheet can replace the compositing later without moving anything: the coordinates
-above are the layout, whoever paints it.
-
 ### 3.3 Synchronisation
 
 * Button presses travel through `AbstractContainerMenu#clickMenuButton(Player, int id)`:
@@ -203,6 +200,27 @@ vanilla hopper item, not the 3D model.
 Optional polish (see [../roadmap.md](../roadmap.md)): a `BlockEntityRenderer` drawing the filter
 item inside that frame, which is what the trim is visually promising.
 
+### 6.1 The filter is shown on the sides
+
+A block entity renderer draws the filter item on each side of the collar except the one the spout
+points at. This is not decoration: the contraption this block replaces is a hopper with an item
+frame on it, and half of why a vanilla sorter can be read at a glance is that every cell shows
+what it takes. A block that hid its filter would be worse than the thing it compresses.
+
+It costs two things, and both are bounded on purpose:
+
+* **A packet.** The filter has to reach the client, so the block entity sends `getUpdateTag` /
+  `getUpdatePacket` — carrying **only** the filter stack. The five storage slots never leave the
+  server; a sorter is several hundred hoppers moving an item every eight ticks, and broadcasting
+  their contents would be a packet storm for nothing. The update is sent with
+  `Block.UPDATE_CLIENTS`, not `UPDATE_ALL`: a filter change is a picture, not a signal.
+* **A draw.** An item model is not free either, so the renderer's view distance is **24 blocks**.
+  A wall of sorter cells draws its labels when a player is close enough to read them and nothing
+  at all from across the base.
+
+Registration goes through vanilla's own `BlockEntityRenderers.register`, reachable because Fabric
+API ships transitive access wideners for it; the Fabric helper that used to do this is deprecated.
+
 ## 7. Implementation notes
 
 The awkward part is reusing vanilla hopper logic. `HopperBlockEntity`'s only constructor hardcodes
@@ -283,7 +301,7 @@ looked like one version earlier:
 | `SimpleContainer#addListener` | Does not exist. Use an anonymous subclass overriding `setChanged()`. |
 | `AbstractContainerScreen` sets `imageWidth`/`imageHeight` in the body | Both are `final`; they are passed to the 5-argument constructor. |
 | The block's removal hook must drop the container's contents | **It must not.** `BlockEntity#preRemoveSideEffects(BlockPos, BlockState)` already calls `Containers.dropContents` for any block entity that is a `Container`. Doing it again in the block duplicates every item in the hopper — a dupe bug. The filter, living in its own container, *is* ours to drop, by overriding that same hook and calling `super` first. |
-| Access widener | Replaced by ClassTweaker, and not needed: the mod uses no non-public vanilla member. |
+| Access widener | Replaced by ClassTweaker, and the mod declares none. The one vanilla member it reaches that is not public, `BlockEntityRenderers.register`, is opened by Fabric API's own transitive access wideners. |
 
 Confirmed as written: `Identifier`, `BlockItemId.create`, the two-overload block registration with
 `setId`, `FabricBlockEntityTypeBuilder`, `ValueOutput#store(String, Codec, T)` /

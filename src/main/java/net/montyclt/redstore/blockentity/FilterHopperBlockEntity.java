@@ -5,8 +5,14 @@ import org.jspecify.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.Containers;
@@ -19,14 +25,17 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
+import net.montyclt.redstore.Redstore;
 import net.montyclt.redstore.menu.FilterHopperMenu;
 import net.montyclt.redstore.registry.RedstoreBlockEntities;
 
@@ -47,6 +56,7 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 		public void setChanged() {
 			super.setChanged();
 			FilterHopperBlockEntity.this.setChanged();
+			FilterHopperBlockEntity.this.sendFilterToClients();
 		}
 	};
 
@@ -193,6 +203,41 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 
 		if (this.level != null) {
 			Containers.dropContents(this.level, pos, this.filterContainer);
+		}
+	}
+
+	// ------------------------------------------------------------------ client sync
+
+	/**
+	 * The block draws its filter on its own sides, so a change has to reach whoever is looking at
+	 * it. Nothing else about this block entity is worth a packet: the five storage slots are
+	 * server business, and a sorter is several hundred hoppers moving an item every eight ticks.
+	 */
+	private void sendFilterToClients() {
+		if (this.level == null || this.level.isClientSide() || !this.level.isLoaded(this.getBlockPos())) {
+			return;
+		}
+
+		BlockState state = this.getBlockState();
+		// UPDATE_CLIENTS and not UPDATE_ALL: a filter change is a picture, not a signal, and the
+		// neighbours have nothing to recompute.
+		this.level.sendBlockUpdated(this.getBlockPos(), state, state, Block.UPDATE_CLIENTS);
+	}
+
+	@Override
+	public Packet<ClientGamePacketListener> getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
+	}
+
+	/** Only the filter travels; {@link #loadAdditional} reads it back on the client. */
+	@Override
+	public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+		try (ProblemReporter.ScopedCollector problems =
+				new ProblemReporter.ScopedCollector(this.problemPath(), Redstore.LOGGER)) {
+			TagValueOutput output = TagValueOutput.createWithContext(problems, registries);
+			output.store("Filter", ItemStack.CODEC, this.getFilterStack());
+
+			return output.buildResult();
 		}
 	}
 
