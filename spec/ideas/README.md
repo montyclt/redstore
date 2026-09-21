@@ -45,6 +45,19 @@ in it by accident.
 logic in torches and repeaters. Design rule 4 in [../README.md](../README.md) says to copy vanilla's
 rules rather than invent better ones; this was an invention.
 
+**And a fourth reason arrived afterwards, which makes the decision firmer rather than explaining
+it.** The gates now extend vanilla's `DiodeBlock`
+([../blocks/abstract-logic-gate.md](../blocks/abstract-logic-gate.md) §9), and that class is built
+around a boolean from end to end: `shouldTurnOn` returns one, and the answer is stored in the
+`POWERED` property. There is nowhere in a diode's block state to keep a number.
+
+Vanilla itself shows what it costs to want one. The comparator is a diode with an analog output,
+and it pays for it with a **block entity** — `ComparatorBlockEntity` exists to hold a single
+`int`, saved and loaded per block. An analog gate would have to do the same, on a block meant to
+be placed in the hundreds across a technical base, where every other Redstore plate is block state
+and nothing else. That is a real, recurring cost, and it buys back the operations the table above
+already gives away for one comparator.
+
 The one operation that is genuinely awkward in vanilla is `min` of two varying signals — see
 [analog-and-gate.md](analog-and-gate.md). If any of this comes back, that is the piece worth
 bringing, and it should come back as what it really is — a comparator operation — rather than as a
@@ -53,6 +66,9 @@ mode on all three gates.
 ## What the three shared, if they ever return
 
 * A `analog` boolean block state, and the click cycle walking `inverted` × `analog`.
+* A block entity per gate, to hold the 0–15 output that `POWERED` cannot — or leaving `DiodeBlock`
+  behind, and with it everything §9 of the gate's spec lists as inherited: the tick scheduling and
+  its priorities, the locking, the pulse stretching, and being a block vanilla accepts as a diode.
 * An amethyst stripe, 2 × 7 pixels down the plate's left flank, as the mode's marker: amethyst is
   the only saturated purple in vanilla's palette and cannot be mistaken for redstone.
 * Twelve more textures and twelve more models, all generated, and 256 block state variants per gate
