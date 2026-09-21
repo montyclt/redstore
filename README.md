@@ -9,9 +9,8 @@ torch-and-repeater assembly in one cell; the filter hopper is the classic compar
 the chunk loader is an ender pearl stasis chamber without the pearl. The mod removes tedium, not
 limits.
 
-> **Early and unreleased.** The three gates, the clock and the filter hopper are written; the
-> chunk loader is specified but not. The mod ID `redstore` is a working codename and the public
-> name is not settled.
+> **Early and unreleased.** All six blocks are written. The mod ID `redstore` is a working
+> codename and the public name is not settled.
 
 ## What it adds
 
@@ -20,7 +19,20 @@ limits.
 | **AND / OR / XOR gate** | Repeater-sized plates with two side inputs and one front output, one redstone tick of delay. Right-click inverts them into NAND, NOR and XNOR. Each is crafted with, and wears a panel of, its own metal: iron, copper, gold. |
 | **Redstone clock** | Emits a periodic signal. Right-click walks eight settings: 1 to 4 redstone ticks per phase, as a square wave or as a 1-tick pulse. Runs by default; a signal on either side stops it and shows the bedrock bar of a locked repeater. |
 | **Filter hopper** | A hopper with one extra filter slot, plus whitelist/blacklist and strict/loose matching. The filter governs what may *enter*; whatever is inside can always leave. |
-| **Chunk loader** | *Specified, not implemented.* Keeps its own chunk force-loaded and fully ticking, across restarts. |
+| **Chunk loader** | Keeps its own chunk force-loaded and fully ticking, across restarts, with nobody nearby. An enchanting table with an ender pearl where the book goes. Right-click switches it off and on; the pearl is there when it is working. |
+
+### What a chunk loader does not do
+
+It uses the same force-loading vanilla's own `/forceload` uses, so it inherits vanilla's rules, and
+one of them surprises people:
+
+* **A force-loaded chunk is not a player.** Everything the game gates on a player being nearby stays
+  gated: **no natural mob spawning and no monster spawners**. A dark room does not run. Everything
+  driven by entity AI, block entities or random ticks does run, so an iron farm, a crop farm, a
+  smelter or a hopper clock all keep going.
+* It loads **its own chunk** and no more, so a contraption straddling a chunk border needs one on
+  each side.
+* Weather, time and random ticks behave exactly as in a chunk you are standing in.
 
 ## Requirements
 

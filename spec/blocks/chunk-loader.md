@@ -32,7 +32,9 @@ licenses this block is that the same result is already buildable in survival.
 
 ### 1.1 Documented limitations
 
-These are vanilla behaviours, not bugs, and must be stated in the mod description:
+These are vanilla behaviours, not bugs, and have to be stated where somebody will actually read
+them, which is two places: the **block's own tooltip**, for the one that catches people out, and
+the **README**, in full.
 
 * **A force-loaded chunk is not a player.** Everything vanilla gates on *player proximity* stays
   gated — natural mob spawning and monster spawners do not run. Everything driven by *entity AI*,
@@ -151,14 +153,17 @@ BlockBehaviour.Properties.of()
     .requiresCorrectToolForDrops()
     .sound(SoundType.AMETHYST)
     .lightLevel(state -> state.getValue(BlockStateProperties.ENABLED) ? 7 : 0)
-    .pushReaction(PushReaction.BLOCK)   // pistons must not move it
+    .pushReaction(PushReaction.IMMOVEABLE)   // pistons must not move it
     .noOcclusion()                      // it is twelve pixels tall, not a cube
 ```
 
-* One block state property, vanilla's own `enabled`. Everything else lives in the block entity.
+* One block state property, vanilla's own `enabled`, and that is the whole of the block's state.
+  What it has claimed lives in the per-dimension saved data (§2.2); the block entity stores nothing
+  at all (§6).
 * The shape is the **enchanting table's**: `[0, 0, 0]` to `[16, 12, 16]`, twelve pixels tall.
-* `PushReaction.BLOCK` is deliberate: a moving chunk loader would mean tickets churning every
-  redstone tick.
+* `PushReaction.IMMOVEABLE` is deliberate: a moving chunk loader would mean tickets churning every
+  redstone tick. The constant is named `IMMOVEABLE` in 26.3, misspelling and all — there is no
+  `BLOCK`.
 * Not immune to explosions — it drops normally.
 
 ## 6. Block entity
