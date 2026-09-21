@@ -48,7 +48,9 @@ import net.montyclt.redstore.blockentity.ChunkLoaderBlockEntity;
  * three seconds. The pedestal is the enchanting table's height, so the pearl ends up exactly where
  * the book floats.
  *
- * <p>It is drawn only from close by. A base may hold dozens of these and an item model is not free.
+ * <p>How far away it is still drawn is not set here. {@code BlockEntityRenderer#getViewDistance}
+ * already answers 64, which is what the enchanting table pays for its book — and the pearl is this
+ * block's whole state read-out, so it should not go dark before the thing it imitates.
  */
 public class ChunkLoaderRenderer implements BlockEntityRenderer<ChunkLoaderBlockEntity, ChunkLoaderRenderState> {
 	/** Where the enchanting table's book floats: the top of the table, and a little over. */
@@ -65,8 +67,6 @@ public class ChunkLoaderRenderer implements BlockEntityRenderer<ChunkLoaderBlock
 	 * rest of the way.
 	 */
 	private static final float SIZE = 0.75F;
-
-	private static final int VIEW_DISTANCE = 48;
 
 	private final ItemModelResolver items;
 
@@ -142,10 +142,5 @@ public class ChunkLoaderRenderer implements BlockEntityRenderer<ChunkLoaderBlock
 		pose.scale(SIZE, SIZE, SIZE);
 		state.pearl.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		pose.popPose();
-	}
-
-	@Override
-	public int getViewDistance() {
-		return VIEW_DISTANCE;
 	}
 }

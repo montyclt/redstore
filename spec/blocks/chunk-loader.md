@@ -282,9 +282,14 @@ phase, which is what stops a row of loaders bobbing in lockstep.
 
 This costs three things, and they are **the same three Mojang pays for the book**:
 
-* A **block entity renderer** runs per frame for every visible loader. It is bounded by
-  `getViewDistance()`, as the filter hopper's is.
-* Past that distance the pearl is not drawn, so a working loader looks empty from far away.
+* A **block entity renderer** runs per frame for every visible loader, out to the 64 blocks
+  `BlockEntityRenderer#getViewDistance` answers by default.
+* Past that distance the pearl is not drawn, so a working loader looks empty from far away. The
+  default is deliberately not overridden: 64 is what the enchanting table pays for its book, and
+  the pearl is this block's whole state read-out, so cutting it shorter would mean a loader you
+  cannot read from a distance you can still read a bookshelf-lit table from. The filter hopper
+  does cut its own to 24, and that is the difference between a block a sorter holds hundreds of and
+  one a base holds a handful of.
 * **The block item has no pearl**, because a block entity renderer does not draw the item model.
   The enchanting table's item has no book for exactly this reason — its item definition is a plain
   `minecraft:model` pointing at `block/enchanting_table`, and the table is not among the special
