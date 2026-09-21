@@ -18,7 +18,7 @@ table.
 | Display name (en_us) | AND Gate |
 | Display name (es_es) | Puerta AND |
 | Inverted form | NAND |
-| Inlaid metal | iron — `#EDEDED` `#D4D4D4` `#BDBDBD` `#A3A3A3`, mark `#7E7E7E` |
+| Inlaid metal | iron — `#D4D4D4`, mark `#7E7E7E`, shaded at the quartz's four brightnesses |
 | `GateOperation` constant | `AND` |
 | Recipe metal | Iron ingot |
 | Extra tags | none beyond `redstore:logic_gates` |

@@ -149,9 +149,17 @@ than as a diagram, and vanilla's own two torches are not at a comparator's input
 Vanilla's idiom for "the same plate doing a different job" is an inlay, not a symbol: the comparator
 is the repeater's plate with a piece of quartz set into it. A gate does not imitate that idiom —
 **it takes the setting itself.** The top texture is the comparator's, and the four warm tones its
-quartz is drawn in (`#EBDED4`, `#DDCBBE`, `#D3C7B9`, `#C5B8A9`, rows 6 to 10) are replaced, tone for
-tone, by four lifted from the gate metal's own **ingot texture**. Iron, copper or gold, sitting in
-the shape vanilla already uses for a stone set into a redstone plate.
+quartz is drawn in (`#EBDED4`, `#DDCBBE`, `#D3C7B9`, `#C5B8A9`, rows 6 to 10) are replaced by the
+gate metal's own colour — one tone, from its ingot — **at the four brightnesses the quartz has**.
+Iron, copper or gold, sitting in the shape vanilla already uses for a stone set into a redstone
+plate.
+
+The shading has to be the quartz's, and that is not a refinement. Four tones picked out of an
+ingot by hand look right in a table and wrong on the block: quartz is drawn across 38 levels of
+brightness, while iron's ingot spans 74, copper's 88 and gold's 116. The darkest tone is the one
+that draws the inlay's outline, and that far below the body it stops being depth and becomes a
+drawn line — which the comparator's own outline, barely visible, never is. Scaling one colour by
+the quartz's own brightnesses keeps the hue of the ingot and the contrast of vanilla.
 
 An earlier version drew a 6 × 6 panel of our own on the repeater's plate instead, with a dark
 border to separate it from the stone. It worked, and it was still a badge we invented: a bar of

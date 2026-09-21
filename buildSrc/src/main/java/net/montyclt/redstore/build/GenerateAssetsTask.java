@@ -154,20 +154,18 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	private static final double BUBBLE_R = 1.75;
 
 	/**
-	 * Four tones per metal, lightest first, to stand in for the quartz's four — every one of them
-	 * lifted from that metal's own ingot texture, so the inlay is the colour of the thing the
-	 * recipe asks for and not an approximation of it.
+	 * Two colours per metal, both from that metal's own ingot texture: the colour the metal
+	 * <em>is</em>, and the darker tone the inversion mark is drawn in.
 	 *
-	 * <p>A fifth follows, the ingot's darkest, which is what the inversion bubble is drawn in. The
-	 * inlay's own dark tone is not dark enough for that: iron's is {@code #A3A3A3} against a plate
-	 * of {@code #BBBBBB}, and a marker that faint is no marker.
+	 * <p>The mark needs its own because the inlay's tones are not dark enough for one: the palest
+	 * of them sits on a plate of {@code #BBBBBB}, and a marker that faint is no marker.
 	 */
 	private static final Map<String, int[]> GATE_METALS = new LinkedHashMap<>();
 
 	static {
-		GATE_METALS.put("and_gate", new int[]{0xFFEDEDED, 0xFFD4D4D4, 0xFFBDBDBD, 0xFFA3A3A3, 0xFF7E7E7E});
-		GATE_METALS.put("or_gate", new int[]{0xFFFC9982, 0xFFE77C56, 0xFFC15A36, 0xFF9C4529, 0xFF6D3421});
-		GATE_METALS.put("xor_gate", new int[]{0xFFFDF55F, 0xFFFAD64A, 0xFFE9B115, 0xFFB26411, 0xFF752802});
+		GATE_METALS.put("and_gate", new int[]{0xFFD4D4D4, 0xFF7E7E7E});
+		GATE_METALS.put("or_gate", new int[]{0xFFC15A36, 0xFF6D3421});
+		GATE_METALS.put("xor_gate", new int[]{0xFFFAD64A, 0xFF752802});
 	}
 
 	/**
@@ -699,20 +697,14 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 
 		for (Map.Entry<String, int[]> entry : GATE_METALS.entrySet()) {
 			String gate = entry.getKey();
-			int[] tones = entry.getValue();
+			int colour = entry.getValue()[0];
+			int mark = entry.getValue()[1];
 
-			// Quartz to metal, tone for tone, lightest to darkest.
-			Map<Integer, Integer> inlay = new LinkedHashMap<>();
-
-			for (int tone = 0; tone < QUARTZ.length; tone++) {
-				inlay.put(QUARTZ[tone], tones[tone]);
-			}
-
-			int mark = tones[QUARTZ.length];
+			Map<Integer, Integer> inlay = inlay(colour);
 
 			Map<Character, Integer> metal = new LinkedHashMap<>();
-			metal.put('L', tones[0]);
-			metal.put('M', tones[1]);
+			metal.put('L', shade(colour, 1.1));
+			metal.put('M', colour);
 			metal.put('D', mark);
 
 			for (String suffix : new String[]{"", "_inverted"}) {
@@ -742,7 +734,7 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 				fill(icon, pixel[0] * s, pixel[1] * s, s, PLATE_GREY);
 			}
 
-			stamp(icon, ICON_STONE, ICON_STONE_X, ICON_STONE_Y, tones[0], 0, metal, s);
+			stamp(icon, ICON_STONE, ICON_STONE_X, ICON_STONE_Y, colour, 0, metal, s);
 			writePng(out, "textures/item/" + gate + ".png", icon);
 		}
 	}
@@ -937,6 +929,57 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		return ((mask & 1) != 0 ? "_left" : "")
 				+ ((mask & 2) != 0 ? "_right" : "")
 				+ ((mask & 4) != 0 ? "_on" : "");
+	}
+
+	/**
+	 * What to replace each of the quartz's four tones with: the metal's own colour, at the
+	 * brightness the quartz has there.
+	 *
+	 * <p>Picking four tones out of the ingot by hand looks right in a table and wrong on the
+	 * block. Quartz is drawn across 38 levels of brightness; iron's ingot spans 74, copper's 88
+	 * and gold's 116, so the darkest tone — the one that draws the inlay's outline — falls far
+	 * below the body and the outline stops being depth and becomes a drawn line. The comparator's
+	 * own outline is barely visible, and that is the whole effect.
+	 *
+	 * <p>So the shading is the quartz's, kept exactly: each tone is the metal scaled by how bright
+	 * that quartz tone is against their average. The hue is the ingot's, the contrast is vanilla's.
+	 */
+	private static Map<Integer, Integer> inlay(int metal) {
+		double average = 0;
+
+		for (int tone : QUARTZ) {
+			average += luminance(tone);
+		}
+
+		average /= QUARTZ.length;
+
+		Map<Integer, Integer> tones = new LinkedHashMap<>();
+
+		for (int tone : QUARTZ) {
+			tones.put(tone, shade(metal, luminance(tone) / average));
+		}
+
+		return tones;
+	}
+
+	/** Rec. 601 luminance, which is what the eye reads a tone's depth by. */
+	private static double luminance(int colour) {
+		return 0.299 * ((colour >> 16) & 0xFF)
+				+ 0.587 * ((colour >> 8) & 0xFF)
+				+ 0.114 * (colour & 0xFF);
+	}
+
+	/** The same colour, brighter or darker: every channel scaled, so the hue does not move. */
+	private static int shade(int colour, double factor) {
+		int r = channel(((colour >> 16) & 0xFF) * factor);
+		int g = channel(((colour >> 8) & 0xFF) * factor);
+		int b = channel((colour & 0xFF) * factor);
+
+		return 0xFF000000 | (r << 16) | (g << 8) | b;
+	}
+
+	private static int channel(double value) {
+		return Math.min(255, Math.max(0, (int) Math.round(value)));
 	}
 
 	// ---------------------------------------------------------------- pixels

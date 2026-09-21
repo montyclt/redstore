@@ -245,10 +245,10 @@ precisely defined edit. So far:
   vanilla clock item's own colours, and turned a quarter to show the pulse mode. The plate itself
   is vanilla's, referenced and not derived. The inventory icon is the repeater's 3/4 sprite with a
   dial drawn in it, because a sprite has no room for an object.
-* **Logic gates** — the **comparator's** plate with its quartz recoloured to the gate's metal,
-  tone for tone from that metal's ingot, on models composed out of vanilla's own comparator models
-  so that each of the three torches can be lit on its own, plus an icon made from the comparator's
-  sprite.
+* **Logic gates** — the **comparator's** plate with its quartz recoloured to the gate's metal —
+  the ingot's colour at the quartz's own four brightnesses, so the inlay's outline reads as depth
+  and not as a line — on models composed out of vanilla's own comparator models so that each of
+  the three torches can be lit on its own, plus an icon made from the comparator's sprite.
 
 They are produced by the Gradle task **`generateAssets`**, implemented in `buildSrc/` and run
 automatically before `processResources`, so the jar and the development client both get them with

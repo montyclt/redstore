@@ -18,7 +18,7 @@ table.
 | Display name (en_us) | OR Gate |
 | Display name (es_es) | Puerta OR |
 | Inverted form | NOR |
-| Inlaid metal | copper — `#FC9982` `#E77C56` `#C15A36` `#9C4529`, mark `#6D3421` |
+| Inlaid metal | copper — `#C15A36`, mark `#6D3421`, shaded at the quartz's four brightnesses |
 | `GateOperation` constant | `OR` |
 | Recipe metal | Copper ingot |
 | Extra tags | none beyond `redstore:logic_gates` |

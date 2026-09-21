@@ -18,7 +18,7 @@ table.
 | Display name (en_us) | XOR Gate |
 | Display name (es_es) | Puerta XOR |
 | Inverted form | XNOR |
-| Inlaid metal | gold — `#FDF55F` `#FAD64A` `#E9B115` `#B26411`, mark `#752802` |
+| Inlaid metal | gold — `#FAD64A`, mark `#752802`, shaded at the quartz's four brightnesses |
 | `GateOperation` constant | `XOR` |
 | Recipe metal | Gold ingot |
 | Extra tags | none beyond `redstore:logic_gates` |
