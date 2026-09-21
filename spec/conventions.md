@@ -189,8 +189,32 @@ Key scheme:
 | `message.redstore.clock.mode.square` | Square wave | Onda cuadrada |
 | `message.redstore.clock.mode.pulse` | 1-tick pulse | Pulso de 1 tick |
 | `message.redstore.chunk_loader.status` | Chunk [%s, %s] in %s is loaded | El chunk [%s, %s] en %s está cargado |
+| `tooltip.redstore.<block>.1` | What the block is | Qué es el bloque |
+| `tooltip.redstore.<block>.2` | What a click does to it | Qué hace un clic sobre él |
 
 Player-facing runtime messages are sent as **action bar** text, not chat.
+
+### 7.1 Item tooltips
+
+Every block item carries **exactly two lines** of tooltip, under
+`tooltip.redstore.<block>.1` and `.2`: the first says what the block is, the second what a click
+does to it. Two is the budget, not a minimum — a tooltip that runs to a paragraph is a wiki page
+in the wrong place, and the block's spec is where the whole rule lives.
+
+They are attached as the vanilla **lore component** on the block item's `Item.Properties`, with
+the lines handed over already styled in grey:
+
+```java
+new Item.Properties()
+        .useBlockDescriptionPrefix()
+        .component(DataComponents.LORE, new ItemLore(lines, lines))
+        .setId(id.item())
+```
+
+Overriding `Item#appendHoverText` would do the same thing, but 26.3 deprecates it and no vanilla
+item overrides it any more. `ItemLore`'s two-argument constructor takes the saved lines and the
+rendered ones separately, which is what keeps the hint grey instead of the purple italics lore
+normally gets.
 
 ## 8. Tags
 

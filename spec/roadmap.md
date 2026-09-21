@@ -58,7 +58,6 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 
 * `/redstore loaders list`, to find every loader a dimension holds.
 * Emissive overlay on the chunk loader core.
-* In-game documentation pass: item tooltips summarising each block's rules.
 * README, screenshots, Modrinth page.
 
 ## Explicit non-goals

@@ -1,12 +1,18 @@
 package net.montyclt.redstore.registry;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.references.BlockItemId;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -25,6 +31,9 @@ import net.montyclt.redstore.block.gate.GateOperation;
 import net.montyclt.redstore.block.gate.LogicGateBlock;
 
 public final class RedstoreBlocks {
+	/** Exactly two, for every block: see {@link #tooltip}. */
+	private static final int TOOLTIP_LINES = 2;
+
 	public static final Block AND_GATE = gate(RedstoreBlockIds.AND_GATE, GateOperation.AND);
 	public static final Block OR_GATE = gate(RedstoreBlockIds.OR_GATE, GateOperation.OR);
 	public static final Block XOR_GATE = gate(RedstoreBlockIds.XOR_GATE, GateOperation.XOR);
@@ -78,10 +87,34 @@ public final class RedstoreBlocks {
 	private static Block register(BlockItemId id, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties properties) {
 		Block block = register(id.block(), blockFactory, properties);
 
-		BlockItem blockItem = new BlockItem(block, new Item.Properties().useBlockDescriptionPrefix().setId(id.item()));
+		BlockItem blockItem = new BlockItem(block, new Item.Properties()
+				.useBlockDescriptionPrefix()
+				.component(DataComponents.LORE, tooltip(id))
+				.setId(id.item()));
 		Registry.register(BuiltInRegistries.ITEM, id.item(), blockItem);
 
 		return block;
+	}
+
+	/**
+	 * Every block item carries its own two-line hint: what the block is, and what a click does to
+	 * it. The mod has no configuration and invents no rules, which only helps a player who can
+	 * find out what a block does without leaving the game.
+	 *
+	 * <p>It is carried as the vanilla lore component rather than by overriding
+	 * {@code Item#appendHoverText}, which 26.3 deprecates. The lines are handed over already
+	 * styled, so they read as a hint in grey instead of lore in purple italics.
+	 */
+	private static ItemLore tooltip(BlockItemId id) {
+		String name = id.item().identifier().getPath();
+
+		List<Component> lines = IntStream.rangeClosed(1, TOOLTIP_LINES)
+				.mapToObj(line -> (Component) Component
+						.translatable("tooltip.redstore." + name + "." + line)
+						.withStyle(ChatFormatting.GRAY))
+				.toList();
+
+		return new ItemLore(lines, lines);
 	}
 
 	private RedstoreBlocks() {

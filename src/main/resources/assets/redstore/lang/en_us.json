@@ -14,5 +14,15 @@
 	"message.redstore.clock.mode.pulse": "1-tick pulse",
 	"block.redstore.and_gate": "AND Gate",
 	"block.redstore.or_gate": "OR Gate",
-	"block.redstore.xor_gate": "XOR Gate"
+	"block.redstore.xor_gate": "XOR Gate",
+	"tooltip.redstore.filter_hopper.1": "A hopper that only takes in what matches its filter.",
+	"tooltip.redstore.filter_hopper.2": "Right-click: set the filter, the list and the matching.",
+	"tooltip.redstore.redstone_clock.1": "Runs on its own; a diode aimed at a side locks it.",
+	"tooltip.redstore.redstone_clock.2": "Right-click: 1 to 4 ticks, square wave or pulse.",
+	"tooltip.redstore.and_gate.1": "Two side inputs, one front output, one redstone tick.",
+	"tooltip.redstore.and_gate.2": "Right-click: inverts it into NAND.",
+	"tooltip.redstore.or_gate.1": "Two side inputs, one front output, one redstone tick.",
+	"tooltip.redstore.or_gate.2": "Right-click: inverts it into NOR.",
+	"tooltip.redstore.xor_gate.1": "Two side inputs, one front output, one redstone tick.",
+	"tooltip.redstore.xor_gate.2": "Right-click: inverts it into XNOR."
 }

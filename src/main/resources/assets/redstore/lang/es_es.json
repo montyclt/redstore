@@ -14,5 +14,15 @@
 	"message.redstore.clock.mode.pulse": "Pulso de 1 tick",
 	"block.redstore.and_gate": "Puerta AND",
 	"block.redstore.or_gate": "Puerta OR",
-	"block.redstore.xor_gate": "Puerta XOR"
+	"block.redstore.xor_gate": "Puerta XOR",
+	"tooltip.redstore.filter_hopper.1": "Una tolva que solo admite lo que coincide con su filtro.",
+	"tooltip.redstore.filter_hopper.2": "Clic derecho: define el filtro, la lista y la coincidencia.",
+	"tooltip.redstore.redstone_clock.1": "Funciona solo; un diodo apuntando a un lado lo bloquea.",
+	"tooltip.redstore.redstone_clock.2": "Clic derecho: de 1 a 4 ticks, onda cuadrada o pulso.",
+	"tooltip.redstore.and_gate.1": "Dos entradas laterales, una salida al frente, un tick.",
+	"tooltip.redstore.and_gate.2": "Clic derecho: la invierte en NAND.",
+	"tooltip.redstore.or_gate.1": "Dos entradas laterales, una salida al frente, un tick.",
+	"tooltip.redstore.or_gate.2": "Clic derecho: la invierte en NOR.",
+	"tooltip.redstore.xor_gate.1": "Dos entradas laterales, una salida al frente, un tick.",
+	"tooltip.redstore.xor_gate.2": "Clic derecho: la invierte en XNOR."
 }
