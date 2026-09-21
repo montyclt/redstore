@@ -13,6 +13,13 @@ an idea; if it is ruled out for good it stays here with that written down.
 | [analog-and-gate.md](analog-and-gate.md) | Built, then withdrawn on 2026-09-20 |
 | [analog-or-gate.md](analog-or-gate.md) | Built, then withdrawn on 2026-09-20 |
 | [analog-xor-gate.md](analog-xor-gate.md) | Built, then withdrawn on 2026-09-20 |
+| [t-flip-flop.md](t-flip-flop.md) | Proposed on 2026-09-21 |
+| [rs-latch.md](rs-latch.md) | Proposed on 2026-09-21 |
+| [vertical-wire.md](vertical-wire.md) | Proposed on 2026-09-21 |
+
+The three newest are unrelated to the analog gates and to each other, except that two of them —
+the [T flip-flop](t-flip-flop.md) and the [RS latch](rs-latch.md) — would both give the mod
+**memory**, which it has none of today. That is one decision, not two, and it is taken once.
 
 ## Why the three analog gates were withdrawn together
 
