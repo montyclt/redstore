@@ -15,3 +15,6 @@
 
 # Logs
 *.log
+
+# Scratch space: screenshots, notes, anything handed over in passing.
+/.nocommit/

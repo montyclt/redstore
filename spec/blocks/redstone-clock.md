@@ -176,12 +176,32 @@ state.
 
 ## 6. Appearance
 
-A repeater plate with **the waveform itself engraved on it**, and the delay shown the way a
-repeater shows it: by the position of a sliding torch.
+**A repeater plate with a clock standing on it.** The plate is vanilla's own `block/repeater`,
+unedited — nothing is engraved on it at all — and what makes the block a clock is an object it
+carries, the way the thing that makes it a repeater is the pair of torches. The delay is shown the
+way a repeater shows it: by the position of the sliding torch.
 
-### 6.1 The mode badge
+This replaced a design in which the dial and the mode were *drawn* on the plate. The drawings were
+correct and they looked like drawings: a block that says what it is by carrying an object reads as
+a block, and one that says it with a picture reads as a texture. The reasoning that produced those
+marks is kept below, because most of it is about the block and not about how it was drawn.
 
-The right flank carries a **badge for the mode**, not a picture of the signal: a solid square for
+### 6.1 The mode marker
+
+**The whole clock is turned a quarter for the pulse mode.** In square mode it looks along the
+wire, the way the signal leaves; in pulse mode it looks across it. Nothing is added to the plate
+and nothing is taken off it — the one object the block already carries says both things.
+
+What makes it work is that a plate is read **from above**, and from above the two are different
+silhouettes: a bar lying across the plate, or one lying along it. An earlier version turned only
+the *hands* instead, leaving the silhouette identical — which is unreadable, and was the wrong
+reading of the same idea.
+
+Two earlier answers are worth keeping for their reasoning. The first was a **peg** on the right
+flank, there in pulse mode and gone in square — presence and absence, which is the strongest form
+of the rule below, at the cost of a second object on the plate. Before that came a **badge**
+engraved in the plate, and the argument for its *shape* is the part that still matters: a solid
+square for
 the square wave, a thin bar for the 1-tick pulse.
 
 ```
@@ -197,7 +217,7 @@ Same box, half the area, so the two read apart by weight alone without having to
 The bar keeps the square's top row, so switching mode takes a row away rather than moving the mark,
 and it suggests "briefly on" without asserting anything the block cannot keep.
 
-It sits at x = 11, y = 9 — on the right flank, level with the middle of the dial across the plate.
+Both of those lived on the right flank, clear of the torch track.
 
 **Drawing the actual waveform was tried and abandoned**, twice. A glyph cannot know the delay
 setting, so it drew the same three cycles whether the clock ran at one tick per phase or at four:
@@ -210,40 +230,82 @@ wave and differed only in the thickness of a dot.
 The lesson is worth keeping: **a badge claims only that it is one mode and not the other, and that
 is a claim the block can always honour.**
 
-It is engraved in vanilla's redstone red: dark when the clock is off, bright when it is on, the
-same way the repeater's own painted line behaves.
+One thing was lost along the way and it is worth naming: the badge was engraved in vanilla's
+redstone red and lit up with the output, so it doubled as a second lit indicator. Neither the peg
+nor the turned clock lights. The torches still do, and they are what a plate is read by from
+above.
 
 ### 6.1.1 The dial
 
-A five-pixel clock face in the vanilla clock item's gold sits on the plate's left flank, beside
-the torch track, in every variant. The waveform says what the block *does*; the dial says what it
-*is*, which matters when a plate family all shares the same silhouette. The same dial, four pixels
-across, sits at the top corner of the inventory icon, in the gap left by the torch that was erased
-from the repeater sprite.
+**A real clock stands beside the output torch**, in every variant: a five-pixel disc, two pixels
+deep, **on a post**, in the same two pixels of depth as the torch and one place to its left. The
+post is what holds it up off the stone — without one the disc lies against the plate and reads as
+a sticker again, which is the same mistake in a different shape. Its dial ends up level with the
+torch's head, which is what makes the two read as a pair of instruments rather than as a thing and
+some scenery.
+
+It is round the only way a model can be: **two boxes, a wide one crossed with a tall one**, which
+is how pixel art draws a circle. The clock has its own depth rather than a face on a case — a case
+is a box, and a box around a round thing is the part you notice.
+
+It is the mod's own object, with its own texture, but not its own colours: the gold, the shadow,
+the pale dial and the near-black hands are all lifted from `item/clock_00.png`, which is why a gold
+clock on a stone plate looks like it came with the game. The sheet is one 16 × 16 texture in three
+regions — the dial at (0, 0), the rim at (5, 0), the post at (10, 0) — and every face of the model
+is mapped to its own region at the block's own density, so nothing is stretched.
+
+**Vanilla's clock item was tried here first, copied unedited onto a one-pixel panel, and it does
+not survive being embedded.** It is an inventory icon: drawn round with soft edges against nothing,
+so mounted on a block those edges read as a torn sticker. It has no sides either, because an icon
+has none. What replaced it went too far the other way — a dial on the front of a square case on a
+post — and the case became the thing you saw. Depth is what makes an object an object; a box round
+it is not.
+
+At 16 × 16 the dial is five pixels of pixel art — a gold rim, a pale face, and two hands, one up
+and one out to the left, which is what five pixels will hold. Finer textures draw it as geometry
+instead, with a line half the thickness the small design uses, because that is what the extra
+resolution is for.
+
+**Both forms fill the same footprint**, and that is not cosmetic. The disc's silhouette is two
+crossed boxes, so the model shows the middle three rows of the dial region and its middle three
+columns; a pixel left transparent inside those bands is a hole you can see the world through. A
+circle inscribed in the region leaves exactly such gaps at the bands' corners. So the rim is the
+footprint, filled, with the face cut out of it as a circle — which also makes the rim a shade
+thicker at the corners, exactly as the model's own outline is.
+See [../conventions.md](../conventions.md) §10.2.1.
+
+The sheet holds the dial once — the mode is which way the clock faces, not what its hands are
+doing — plus a region for the rim, which is what a clock looks like edge on and what the disc's
+sides and top show, and a two-pixel region for the post.
+
+The mode says what the block *does*; the clock says what it *is*, which matters when a plate family
+all shares the same silhouette.
+
+The **inventory icon still draws one**, four pixels across, in the corner of the repeater sprite.
+An icon is a flat sprite with no room for an object, and the two forms of that little dial — a
+glyph at 16 × 16 and geometry above it — are described in
+[../conventions.md](../conventions.md) §10.2.1.
 
 ### 6.2 Torches and delay
 
-The model is **the vanilla repeater's, unchanged but for its textures**: a fixed torch at the
-output end and a sliding one whose four positions are the four settings. A clock is a repeater loop
-in a block, so it carries a repeater's torches.
+The model is **the vanilla repeater's with two elements added**: a fixed torch at the output end
+and a sliding one whose four positions are the four settings, plus the clock panel and, in pulse
+mode, the peg. A clock is a repeater loop in a block, so it carries a repeater's torches.
 
-That is what pushed the waveform off the middle of the plate: the torch track owns the centre, the
-dial owns the left flank, so the waveform runs **down the right flank, vertically**.
+The torch track owns the centre column, which is what puts the clock to the left of it. The disc
+clears the track at every delay setting.
 
 ### 6.3 Files
 
-Four textures, all derived from `block/repeater` and `block/repeater_on`:
-
-| File | Mode | Output |
-| --- | --- | --- |
-| `redstone_clock_top.png` | square | off |
-| `redstone_clock_top_on.png` | square | on |
-| `redstone_clock_top_pulse.png` | pulse | off |
-| `redstone_clock_top_pulse_on.png` | pulse | on |
+**One texture for the block**: `redstone_clock_face.png`, the clock's own three-region sheet. The
+plate itself is `minecraft:block/repeater`, referenced directly — the block generates no plate
+texture at all, because there is nothing left to change on it.
 
 Twenty-four models — `delay` × `pulse` × `powered`, plus a locked variant per `delay` × `pulse` —
-each the matching `repeater_<n>tick[_on][_locked]` model with nothing changed but its textures. A locked clock is always off, so the lit locked models are not generated and the
-block state file points both `powered` values at the unlit ones. 128 block state variants.
+each the matching `repeater_<n>tick[_on][_locked]` model with the clock's post and two boxes
+appended — the boxes turned a quarter in pulse mode — and its texture references swapped. A locked clock is always off, so the
+lit locked models are not generated and the block state file points both `powered` values at the
+unlit ones. 128 block state variants.
 
 The **inventory icon** is derived from `item/repeater.png`, vanilla's hand-drawn 3/4 view of this
 exact plate, with the dial set into it. Both torches stay, because the block has both and the
@@ -252,10 +314,10 @@ which is why vanilla draws repeaters and comparators as sprites and why this fol
 
 ### 6.4 The lit top face
 
-The output state lights **both** the torch and the engraved waveform, because the lit base texture
-comes free with the derivation and a plate is normally seen from above, where the torch is the
-least visible part of it. This is also exactly what a vanilla repeater does with its own top
-texture, so it costs no new rule.
+The output state lights **both** the torches and the plate's own painted line, because the lit
+plate is `block/repeater_on` and that is exactly what a vanilla repeater does with its own top
+texture. It costs no new rule, and it matters: a plate is normally seen from above, where a torch
+is the least visible part of it.
 
 ## 7. Recipe
 
@@ -269,8 +331,12 @@ redstone_torch  redstone_dust  redstone_torch
 
 **It is the repeater's recipe with a clock under it**, which is what the block is. Read as a parts
 list ([plate §10](abstract-redstone-plate.md)): two torches because the block has two — fixed and
-sliding, like a repeater — the dust for the waveform engraved on the plate, the vanilla clock for
-the dial, and three smooth stone for the plate.
+sliding, like a repeater — the dust for the line painted across the plate, which is the repeater's
+own and pays for itself there too, the vanilla clock because the block **carries one**, and three
+smooth stone for the plate.
+
+The parts list got easier to read when the clock stopped being a drawing: the ingredient is on the
+block, standing up, in the colours it comes in.
 
 The quartz an earlier draft asked for appeared nowhere on the block and is gone.
 

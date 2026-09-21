@@ -82,6 +82,23 @@ Two things follow from that, and both are the point. The edit stays reviewable i
 replayed whenever Mojang retouches an original. And the repository never contains a modified
 Mojang texture: what it holds is the code that describes the edit.
 
+#### If you play with Faithful 64x
+
+The same edits can be applied to [Faithful 64x](https://faithfulpack.net) instead, so the mod's
+blocks are not the only thing in your world still at 16 × 16. Point the build at your own unpacked
+copy of the pack:
+
+```
+./gradlew build -Pfaithful_pack="$HOME/.minecraft/resourcepacks/Faithful 64x - Release 15"
+```
+
+and the mod gains a resource pack, *Redstore for Faithful 64x*, which you switch on in the resource
+pack screen. Leave the property out and nothing changes.
+
+Faithful 64x is by HARYA_ and many others — <https://faithfulpack.net>, licence at
+<https://faithfulpack.net/license>. Nothing derived from it is committed here or shipped: like the
+vanilla art, it is built on your machine from your own copy, which is what their licence asks for.
+
 ## Licence
 
 The code is **BSD 2-Clause** — see [LICENSE](LICENSE).

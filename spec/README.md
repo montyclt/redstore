@@ -74,6 +74,11 @@ The code is BSD 2-Clause. The mod is distributed **as source, not as a jar**, be
 contains textures derived from Mojang's own art and their terms do not allow redistributing those.
 See [conventions.md](conventions.md) §10.1 for the reasoning and what it costs.
 
+The optional Faithful 64x pack ([conventions.md](conventions.md) §10.2) lands in the same place
+from the other direction: Faithful allows modifying their work in a mod, with credit and a link,
+but not as a stand-in for Minecraft's art where Mojang's own would not be allowed. So it is derived
+on the player's machine too, and shipped never.
+
 ## 6. Conventions used in this spec
 
 * **Must / should / may** are used in the RFC 2119 sense.

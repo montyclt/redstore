@@ -10,6 +10,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DiodeBlock;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -32,6 +33,17 @@ import net.minecraft.world.phys.BlockHitResult;
 public class LogicGateBlock extends DiodeBlock {
 	public static final BooleanProperty INVERTED = BooleanProperty.create("inverted");
 
+	/**
+	 * Whether each input flank is carrying a signal, so the torch on that flank can light.
+	 *
+	 * <p>These are the block's face, not its logic: nothing reads them, {@link #shouldTurnOn} asks
+	 * the level directly as it always did. They exist so a gate shows what it is being told as
+	 * well as what it is saying, which is the one thing a builder cannot work out by looking at a
+	 * block whose three gates differ only in colour.
+	 */
+	public static final BooleanProperty INPUT_LEFT = BooleanProperty.create("input_left");
+	public static final BooleanProperty INPUT_RIGHT = BooleanProperty.create("input_right");
+
 	/** One redstone tick, like a repeater on its minimum setting. */
 	private static final int DELAY = 2;
 
@@ -43,12 +55,14 @@ public class LogicGateBlock extends DiodeBlock {
 		this.registerDefaultState(this.stateDefinition.any()
 				.setValue(FACING, Direction.NORTH)
 				.setValue(INVERTED, false)
-				.setValue(POWERED, false));
+				.setValue(POWERED, false)
+				.setValue(INPUT_LEFT, false)
+				.setValue(INPUT_RIGHT, false));
 	}
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(FACING, INVERTED, POWERED);
+		builder.add(FACING, INVERTED, POWERED, INPUT_LEFT, INPUT_RIGHT);
 	}
 
 	@Override
@@ -101,6 +115,52 @@ public class LogicGateBlock extends DiodeBlock {
 	@Override
 	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
 		return direction != null && direction != state.getValue(FACING).getOpposite();
+	}
+
+	/**
+	 * Keep the two input flags in step with the flanks.
+	 *
+	 * <p>Written with {@code UPDATE_CLIENTS} and not {@code UPDATE_ALL}: which torches are lit is a
+	 * picture, and notifying the neighbours about it would put a block update on the wire every
+	 * time any input anywhere changed — on a block meant to be placed in the hundreds.
+	 */
+	private void refreshInputs(Level level, BlockPos pos) {
+		BlockState state = level.getBlockState(pos);
+
+		if (!state.is(this)) {
+			return;
+		}
+
+		Direction facing = state.getValue(FACING);
+		Direction left = facing.getCounterClockWise();
+		Direction right = facing.getClockWise();
+
+		boolean lit = level.getControlInputSignal(pos.relative(left), left, false) > 0;
+		boolean rit = level.getControlInputSignal(pos.relative(right), right, false) > 0;
+
+		if (lit != state.getValue(INPUT_LEFT) || rit != state.getValue(INPUT_RIGHT)) {
+			level.setBlock(pos, state.setValue(INPUT_LEFT, lit).setValue(INPUT_RIGHT, rit),
+					Block.UPDATE_CLIENTS);
+		}
+	}
+
+	@Override
+	protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighbourBlock,
+			Orientation orientation, boolean movedByPiston) {
+		super.neighborChanged(state, level, pos, neighbourBlock, orientation, movedByPiston);
+
+		if (!level.isClientSide()) {
+			this.refreshInputs(level, pos);
+		}
+	}
+
+	@Override
+	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+		super.onPlace(state, level, pos, oldState, movedByPiston);
+
+		if (!level.isClientSide()) {
+			this.refreshInputs(level, pos);
+		}
 	}
 
 	/** Right-click toggles the negation, which is the gate's only setting. */

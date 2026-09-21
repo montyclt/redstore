@@ -18,7 +18,7 @@ table.
 | Display name (en_us) | OR Gate |
 | Display name (es_es) | Puerta OR |
 | Inverted form | NOR |
-| Inlaid panel | copper, `#C15A36` |
+| Inlaid metal | copper — `#FC9982` `#E77C56` `#C15A36` `#9C4529`, mark `#6D3421` |
 | `GateOperation` constant | `OR` |
 | Recipe metal | Copper ingot |
 | Extra tags | none beyond `redstore:logic_gates` |
@@ -58,17 +58,17 @@ rule ([plate §10](abstract-redstone-plate.md)). Unlock trigger: `has(Items.COPP
 
 ## 4. Textures
 
-Two 16 × 16 top textures: the copper panel inlaid in the bare plate, with and without the
-inherited negation bubble.
+Two 16 × 16 top textures: the comparator's plate with its quartz recoloured to copper, with
+and without the inherited negation bubble.
 
 | File | Negation bubble |
 | --- | --- |
 | `or_gate_top.png` | – |
 | `or_gate_top_inverted.png` | yes |
 
-One texture serves both the lit and the unlit model, because what lights up is the pair of torches,
-not the plate. Four block models — the two textures against lit and unlit torches — all derived
-from the repeater's, with its two torches moved to the front corners. Sides and bottom reuse
+One texture serves every model, because what lights up is the torches, not the plate. Sixteen
+block models — the two textures against the eight lit/unlit combinations of three torches — each
+composed out of vanilla's own comparator models. Sides and bottom reuse
 `minecraft:block/smooth_stone`. The icon is `item/or_gate.png`.
 
 ## 5. Inherited behaviour, for reference
@@ -79,6 +79,6 @@ from the repeater's, with its two torches moved to the front corners. Sides and 
 | Output | front face only, strong power — [plate §5](abstract-redstone-plate.md) |
 | Delay | 1 redstone tick, fixed — [gate §3](abstract-logic-gate.md) |
 | Right-click | toggles `inverted` — [gate §5](abstract-logic-gate.md) |
-| Block state | `facing`, `inverted`, `powered` — [gate §4](abstract-logic-gate.md) |
+| Block state | `facing`, `inverted`, `powered`, `input_left`, `input_right` — [gate §4](abstract-logic-gate.md) |
 | Tags | `redstore:logic_gates`, `redstore:redstone_plates`, `minecraft:mineable/pickaxe` |
 | API checklist | [plate §14](abstract-redstone-plate.md) |

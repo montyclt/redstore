@@ -108,8 +108,18 @@ Adds to the base's `facing`:
 | --- | --- | --- | --- |
 | `inverted` | `BooleanProperty` | `false` default | Negated output (NAND / NOR / XNOR). |
 | `powered` | `BooleanProperty` (`DiodeBlock.POWERED`) | `false` default | Whether the gate is emitting; also the lit flag. Inherited from the diode. |
+| `input_left` | `BooleanProperty` | `false` default | Whether the left flank is carrying a signal. |
+| `input_right` | `BooleanProperty` | `false` default | The same on the right. |
 
-16 states per gate: four facings, inverted or not, powered or not.
+64 states per gate: four facings × inverted × powered × the two inputs.
+
+The two input flags are **face, not logic.** Nothing reads them back: `shouldTurnOn` asks the level
+directly, as it always did, so a stale flag can never change what the gate answers. They exist so
+that the block shows what it is being told as well as what it is saying.
+
+They are written with `UPDATE_CLIENTS` and not `UPDATE_ALL`. Which torches are lit is a picture,
+and telling the neighbours about it would put a block update on the wire every time any input
+anywhere changed — on a block meant to be placed in the hundreds.
 
 ## 5. Interaction
 
@@ -122,27 +132,47 @@ gate is in.
 
 ## 6. Appearance
 
-**A comparator with a metal core.** Three redstone torches — one at each input flank and one at the
-output — the plate's painted redstone line rubbed out, and a panel of the gate's own metal set into
-the stone between them.
+**A comparator with a metal core**, and that is literal: the top texture *is*
+`block/comparator.png` with its quartz recoloured to the gate's own metal, on the comparator's
+**own models**. Three redstone torches, two at the back corners and one at the front, exactly where
+vanilla puts them, and the painted line running between the back two, exactly as vanilla paints
+it.
 
-The torch count is not decoration: it is the block's wiring diagram. Two in, one out, arranged where
-the signals actually are, so a gate can be read from above without knowing which block it is.
+The torch count is what the block says about itself: three torches is the comparator's silhouette,
+and a gate is a comparator-shaped thing — two inputs, one output, one tick more delay than a
+repeater. It is not a wiring diagram. An earlier version moved the two rear torches out to the
+flanks, to sit where the inputs are; against the comparator's plate that read as a mistake rather
+than as a diagram, and vanilla's own two torches are not at a comparator's inputs either.
 
-### 6.1 The metal panel
+### 6.1 The metal inlay
 
 Vanilla's idiom for "the same plate doing a different job" is an inlay, not a symbol: the comparator
-is the repeater's plate with a piece of quartz set into it. Each gate follows that with the metal
-its recipe calls for — iron, copper or gold — so the block wears what it is made of.
+is the repeater's plate with a piece of quartz set into it. A gate does not imitate that idiom —
+**it takes the setting itself.** The top texture is the comparator's, and the four warm tones its
+quartz is drawn in (`#EBDED4`, `#DDCBBE`, `#D3C7B9`, `#C5B8A9`, rows 6 to 10) are replaced, tone for
+tone, by four lifted from the gate metal's own **ingot texture**. Iron, copper or gold, sitting in
+the shape vanilla already uses for a stone set into a redstone plate.
 
-The panel is 6 × 6 pixels at x = 5, which centres it exactly, drawn in three tones taken from the
-ingot's own texture: light on the top half, mid on the bottom, and a dark border all round. It was
-eight wide until the torches moved inward and needed the room.
+An earlier version drew a 6 × 6 panel of our own on the repeater's plate instead, with a dark
+border to separate it from the stone. It worked, and it was still a badge we invented: a bar of
+metal lying on a plate rather than a stone set into one. Recolouring the real thing is both truer
+and cheaper — there is no shape to design, no border to tune, and no size to re-fit when the
+torches move.
 
-That border is what makes the design work at all. Iron is `#D8D8D8` against a plate of `#BBBBBB`
-to `#C5C5C5` — barely twenty levels brighter, and invisible as a flat patch. What separates the
-panel from the stone is its outline and its flatness, not its hue, which is the same reason
-vanilla's pale quartz reads against pale stone.
+It also travels. A resource pack that redraws the comparator is followed for free, at whatever
+resolution, as long as it keeps vanilla's palette — and Faithful 64x keeps it to the colour, so the
+inlay there is Faithful's own 469-pixel quartz in iron rather than ours enlarged four times.
+
+Nothing else on the plate is touched. An earlier version also rubbed out the painted redstone
+line, on the argument that a gate has no signal travelling that path — but on the comparator's
+plate that line runs from one rear torch to the other, and on a gate those two torches are the
+inputs. It joins the two things that feed the block, which is what it appears to do on a comparator
+too, so it stays.
+
+(That rub-out is also where this design's one silent bug lived: it found the line by colour, copper
+and gold fall inside that rule, and running it after the recolouring erased the inlay on two of the
+three gates and left iron alone because iron is grey. It is recorded in
+[../conventions.md](../conventions.md) §10.3 because the lesson outlives the code.)
 
 A consequence worth recording: **the three gates differ only in colour.** There is no symbol to
 fall back on, so they are harder to tell apart in the dark, and impossible for a player who cannot
@@ -151,32 +181,66 @@ letter never stops looking like a decal — but this is the cost of that decisio
 
 ### 6.2 The marker
 
-Inversion is drawn as a **bubble**: a 4 × 3 ring between the output torch and the panel, which is
-as close to the output as the torch leaves room for. It is the standard mark in any logic diagram,
-carved in the metal's dark tone rather than in redstone red, because a gate's recipe contains no
-redstone dust and nothing on its face may imply an ingredient that is not there (see
-[plate §10](abstract-redstone-plate.md)).
+Inversion is drawn as a **bubble**: a 4 × 3 ring in the plate's **top right corner**, at x = 11,
+y = 2. It is the standard mark in any logic diagram, carved in the metal rather than in redstone
+red, because a gate's recipe contains no redstone dust and nothing on its face may imply an
+ingredient that is not there (see [plate §10](abstract-redstone-plate.md)).
+
+The corner is the only place it fits. The comparator's composition spends the middle of the plate
+on the inlay, the front on the output torch and the back on the painted line; the bubble sat
+between the torch and the inlay while the plate was the repeater's, and there is no such gap here.
+
+It is drawn in a **fifth** tone, the ingot's darkest, and not in the inlay's own dark one. Iron's
+darkest inlay tone is `#A3A3A3` against a plate of `#BBBBBB`, and a marker that faint is no marker;
+the ingot's `#7E7E7E` reads.
+
+At 16 × 16 it is that 4 × 3 glyph; at any finer resolution it is drawn as a **circle**, centred and
+sized in units of the small design so the two cannot drift. A ring made of four-pixel blocks is
+what a scaled glyph gives, and on a 64 × 64 plate it is the one mark that looks unfinished. See
+[../conventions.md](../conventions.md) §10.2.1.
+
+The mark is not the only thing that says a gate is inverted, and it is the less useful of the two:
+the output torch follows the output, so an inverted gate with no input stands there with its front
+torch lit. That is the same tell a redstone torch on an unpowered block gives, and it is visible
+from further away than a four-pixel ring.
 
 ### 6.3 What lights up
 
-The **torches**, exactly as on a repeater, using vanilla's own lit and unlit torch textures. The
-plate's face does not change at all, so a gate needs only **two** top textures — plain and
-inverted — and four models, the two textures against lit and unlit torches. Twelve models and six
-textures for the three gates, plus one icon each, all produced by the `generateAssets` Gradle task.
+**The three torches light independently.** Each flank's torch follows that flank's input, and the
+front torch follows the output — so a gate at a glance says what it has been given and what it has
+decided. A player who cannot tell iron from copper in a dark corridor can still see that the left
+input is live and the gate is not answering.
 
-Torch geometry is the repeater's own torch element copied three times and moved: to `x−4, z+5` for
-the left input, `x+4, z+5` for the right, and left where it is for the output. In a lit model each
-copy drags its six glow quads along with it.
+This is the whole point of the two input flags, and it is worth being clear that it is **not** the
+inversion mark by another name: the flanks say what is arriving, the front says what is leaving,
+and inversion only changes the relationship between them.
 
-The input torches stop two pixels short of the plate's edge. Flush against it they covered the
-darker shading along the rim — the part of the top texture that reads as the plate's side when you
-look at it from an angle — and the plate lost its edge.
+The plate's face never changes, so a gate needs **two** top textures — plain and inverted — and
+**sixteen** models: two faces against each of the eight lit/unlit combinations of three torches.
+Forty-eight models and six textures for the three gates, plus one icon each, all produced by the
+`generateAssets` Gradle task. The block state file has 64 variants per gate.
+
+**Every torch comes from a vanilla model, unmoved.** `comparator.json` holds the three unlit
+torches and `comparator_on_subtract.json` the three lit ones — the second because it is the one
+state in which a comparator has all three lit, each dragging the six glow quads a lit torch needs.
+A model is the slab plus one of the two versions of each torch; not a single coordinate is
+computed.
+
+Elements are taken by index, because glow quads cannot be told apart by geometry — two of them
+occupy the same box — and each index is then checked against the corner it should have. A
+reordering in a future vanilla model fails the build rather than quietly putting a torch somewhere
+else.
 
 The **icon** is the **comparator's** 3/4 sprite, not the repeater's, because the comparator already
-draws three torches and that is what a gate has. Its painted redstone line is rubbed out, as on the
-block, and a chip of the gate's metal goes where the block carries its panel.
+draws three torches and that is what a gate has. It diverges from the block in two ways, both
+forced by size. The sprite draws a plate five pixels deep and **no quartz at all**, so there is
+nothing to recolour and the metal is drawn instead: the smallest shape that reads as a stone set
+into the plate rather than a bar lying on it, five pixels in the shape of a diamond. And its
+painted line *is* rubbed out, unlike the block's, because those same five pixels are the only place
+the metal can go.
 
-The block state file has 16 variants per gate: `facing` × `inverted` × `powered`.
+Left is `+x`: a model with no rotation is the gate facing south, whose left flank —
+`FACING.getCounterClockWise()` — is east. The block state file rotates it from there.
 
 ## 7. Recipe
 

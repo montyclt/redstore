@@ -240,12 +240,15 @@ precisely defined edit. So far:
 
 * **Filter hopper** — a vanilla hopper with the rim of its mouth recoloured to the item frame's
   wood, plus its two block models with the texture references swapped.
-* **Redstone clock** — the vanilla repeater plate with a mode badge and a clock dial engraved on
-  it, the repeater's own delay models with nothing changed but their textures, and an inventory
-  icon made from the repeater's 3/4 sprite.
-* **Logic gates** — the same plate with the painted redstone line rubbed out and a panel of the
-  gate's metal set into it, the repeater's torch copied to three positions, and an icon made from
-  the comparator's sprite.
+* **Redstone clock** — the repeater's own delay models with a clock standing beside the output
+  torch: a five-pixel disc on a post, two boxes crossed to make it round, drawn by the task in the
+  vanilla clock item's own colours, and turned a quarter to show the pulse mode. The plate itself
+  is vanilla's, referenced and not derived. The inventory icon is the repeater's 3/4 sprite with a
+  dial drawn in it, because a sprite has no room for an object.
+* **Logic gates** — the **comparator's** plate with its quartz recoloured to the gate's metal,
+  tone for tone from that metal's ingot, on models composed out of vanilla's own comparator models
+  so that each of the three torches can be lit on its own, plus an icon made from the comparator's
+  sprite.
 
 They are produced by the Gradle task **`generateAssets`**, implemented in `buildSrc/` and run
 automatically before `processResources`, so the jar and the development client both get them with
@@ -276,7 +279,94 @@ An earlier draft committed the generated files, with the reasoning that "the bui
 on a jar sitting in someone's cache". That reasoning does not hold: the build already depends on
 Loom having downloaded Minecraft, so the jar is always there when the task runs.
 
-### 10.2 Consequences to keep in mind
+### 10.2 The Faithful 64x pack
+
+The same edits, applied a second time to **Faithful 64x** instead of the vanilla jar, produce a
+resource pack the player can switch on: `resourcepacks/faithful_64x/` inside the mod, offered in
+the resource pack screen through `ResourceLoader.registerBuiltinPack`.
+
+It exists because a player running Faithful sees every vanilla block at 64 × 64 and Redstore's five
+at 16 × 16, which is the one way this mod can look like a mod.
+
+**It is optional at build time.** The Gradle property `faithful_pack` points at an unpacked copy of
+the pack; without it the task produces no 64x output and the mod is built exactly as before. The
+pack is never committed and never shipped, for the same reason as everything else in this section —
+and here the licence says so outright. Faithful allows using and modifying their work in a mod,
+with credit and a link, but forbids using it "as a substitute for Minecraft's graphics when default
+textures otherwise wouldn't be allowed", which is exactly what shipping these files would be. So
+they are derived on the player's machine from the player's own copy, or not at all. The generated
+`pack.mcmeta` carries the credit and the link their licence asks for.
+
+What makes this cheap enough to be worth doing:
+
+* **Faithful uses vanilla's palette.** Its `hopper_top` at 64 × 64 is drawn in the same six greys
+  as vanilla's at 16 × 16, and its hopper icon in the same seven. Every colour mapping in the task
+  therefore carries over untouched, which is the part that would have been most expensive.
+* **Coordinates scale.** Every region and every glyph is written once for a 16 × 16 texture and
+  multiplied by the target's scale. A block occupies the same space in the world whatever its
+  texture's resolution, so a mark four pixels wide on a 64 × 64 plate is exactly as big as a
+  one-pixel mark on a 16 × 16 one.
+* **Only textures.** Models, block states, language files and the rest are resolution-independent
+  and already in the mod, so the pack overrides pixels and nothing else.
+
+Two more things worth writing down:
+
+* **It does not turn itself on.** Detecting Faithful would mean matching pack names, which change
+  between releases and between Faithful's own resolutions. The player switches it on.
+* **Its `pack.mcmeta` declares a format range**, `min_format` to `max_format`, as vanilla's own
+  packs and Faithful's do. The older single `pack_format` still parses, but it pins the pack to
+  one exact format: 26.3 serves resources at 97.1, a lone `97` reads as 97.0, and the game marks
+  the pack **broken** in the list while loading it anyway. A bare major at each end of a range
+  covers every minor inside it. The number itself is read from the game's `version.json`, so it
+  cannot go stale.
+
+### 10.2.1 What is redrawn and what is only scaled
+
+The vanilla-derived half of each texture gains Faithful's extra pixels for free, because it *is*
+Faithful's art. The mod's own marks do not: scaled up they keep their shape and gain no detail.
+
+**The funnel in the filter slot is redrawn**, because a placeholder's whole job is to read as one.
+Faithful's thirty slot icons are drawn at a **two-pixel** stroke with the diagonals stepping a
+pixel at a time — measured from their own shield — and a scaled copy of ours would have carried a
+four-pixel stroke, which at that resolution reads as a filled shape again. Same shape, same
+proportions, finer line. It is drawn as geometry rather than ASCII art because at that size it *is*
+geometry: a rim, two 45° walls, a spout and a rounded bottom, measured in units of the small
+design so the two cannot drift. The 16 × 16 one stays hand-placed, because there every pixel is a
+decision.
+
+**The gates' metal inlay is not drawn at all** any more, in either resolution: it is the
+comparator's own quartz recoloured, so at 64x it is Faithful's 469-pixel quartz in iron rather than
+our enlargement of anything. That is the pattern to reach for first — a derivation follows a pack
+wherever it goes, a drawing does not.
+
+**The marks that survive on a texture are drawn twice**, like the funnel: as a glyph for 16 × 16
+and as geometry for anything finer. Scaling them was defensible for a while and then stopped being
+— a ring authored on a 4 × 3 grid is, at 64 × 64, a ring of four-pixel blocks, and next to
+Faithful's own curves it is the only thing on the block that did not get redrawn. The fine forms
+are **circles that are actually round**, measured in units of the 16 × 16 design — the same centre,
+the same radius — so the two cannot drift apart.
+
+Three are left: the gate's **inversion bubble**, the little dial in the clock's **inventory icon**,
+and the **clock's own dial**, which is the mod's own art and is therefore drawn at both sizes.
+
+The pattern to reach for first is still a **derivation** — the gates' inlay is the comparator's own
+quartz recoloured, and it follows a resource pack wherever it goes, at whatever resolution, which
+no drawing of ours can. But it only works where vanilla has the thing already. Vanilla's clock
+exists only as an inventory icon, and an icon embedded in a block is a torn sticker: soft edges
+against nothing, no case, no stand. That one had to be drawn.
+
+One mark is still only scaled: the metal diamond on a gate's **icon**, five pixels on a plate five
+pixels deep. There is nothing there to refine.
+
+And one rule that only shows up when a texture meets a model: **a texture may not be rounder than
+the silhouette it is mapped onto.** The clock's disc is two crossed boxes, so its dial texture is
+sampled as three rows and three columns of a five-pixel square; a circle drawn inside that square
+leaves transparent pixels at the corners of those bands, and transparent pixels on a block are
+holes you see the world through. The fix is to fill the footprint and cut the round face out of it,
+not to draw the round thing and hope. A glyph gets this right by accident, because pixel art of a
+circle at that size *is* the footprint; geometry has to be told.
+
+### 10.3 Consequences to keep in mind
 
 * The task's only prerequisite is the JDK the build already needs. An earlier version was a Python
   script, which would have meant asking every player to install Python as well; Java's `ImageIO`
@@ -288,6 +378,11 @@ Loom having downloaded Minecraft, so the jar is always there when the task runs.
   `./gradlew runClient`.
 * Everything that reads the main resources must depend on the task — `processResources` and
   `sourcesJar` both do, and Gradle fails the build if one is forgotten.
+* **An edit that selects pixels by colour has to run before any edit that paints them.** Rubbing
+  out a plate's signal line works by colour — anything markedly redder than it is green — so with
+  the gates' inlay recoloured first, it erased the inlay: every copper tone and three of gold's
+  four, leaving iron alone because iron is grey. It failed silently and it failed differently per
+  gate, which is what made it look like an art problem rather than an ordering one.
 
 ## 11. Data generation
 

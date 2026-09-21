@@ -35,6 +35,12 @@ tasks.register("generateAssets", net.montyclt.redstore.build.GenerateAssetsTask)
 	description = "Derives the mod's textures and block models from the vanilla Minecraft jar."
 	minecraftJar = file("${gradle.gradleUserHomeDir}/caches/fabric-loom/${project.minecraft_version}/minecraft-client.jar")
 	outputDirectory = generatedAssets
+
+	// Optional: point this at an unpacked Faithful 64x pack and the build also produces the 64x
+	// resource pack. Without it the mod is built exactly as before. See spec/conventions.md §10.3.
+	if (project.hasProperty("faithful_pack")) {
+		faithfulPack = file(project.faithful_pack)
+	}
 }
 
 sourceSets.main.resources.srcDir(generatedAssets)

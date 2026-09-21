@@ -25,7 +25,9 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
@@ -45,8 +47,8 @@ import org.gradle.api.tasks.TaskAction;
  *       wood, plus its two block models with the texture references swapped.</li>
  *   <li><b>redstone clock</b> — the repeater plate with a mode badge and a clock dial engraved on
  *       it, and the repeater's own delay models with nothing changed but their textures.</li>
- *   <li><b>logic gates</b> — the same plate with the painted redstone line rubbed out, a panel of
- *       the gate's metal set into it, and the repeater's torch copied to three positions.</li>
+ *   <li><b>logic gates</b> — the comparator's plate with its painted redstone line rubbed out and
+ *       its quartz recoloured to the gate's metal, on the comparator's own models.</li>
  * </ul>
  *
  * <p>One asset is not derived from anything: the funnel the empty filter slot draws. It is ours,
@@ -82,13 +84,19 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 			0xFF383838, 0xFF734029,
 			0xFF303030, 0xFF603623);
 
-	/** Vanilla's own unlit and lit redstone reds, sampled from block/repeater. */
-	private static final int ENGRAVED_OFF = 0xFF580101;
-	private static final int ENGRAVED_ON = 0xFFD70304;
-
-	/** Gold and shadow from the vanilla clock item. */
+	/** Gold and shadow from the vanilla clock item. */	/** Gold and shadow from the vanilla clock item. */
 	private static final int DIAL_GOLD = 0xFFFAD64A;
 	private static final int DIAL_DARK = 0xFF752802;
+
+	/**
+	 * The clock that stands on the plate is the mod's own object, so it needs its own texture —
+	 * but not its own colours. Every one of these is lifted from {@code item/clock_00.png}, which
+	 * is why a gold clock on a stone plate looks like it came with the game.
+	 */
+	private static final int CLOCK_RIM = 0xFFFAD64A;
+	private static final int CLOCK_EDGE = 0xFFB26411;
+	private static final int CLOCK_FACE = 0xFFFBF7B7;
+	private static final int CLOCK_HANDS = 0xFF181616;
 
 	private static final int PLATE_GREY = 0xFFA4A7A1;
 
@@ -106,38 +114,21 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 */
 	private static final int SLOT_ICON_GREY = 0xFF555555;
 
-	// ---------------------------------------------------------------- glyphs
+	// ---------------------------------------------------------------- glyphs	// ---------------------------------------------------------------- glyphs
 
 	/**
-	 * Glyphs are ASCII art so the edit lives in the diff rather than in a binary. '#' takes the
-	 * main colour, '+' the accent, and 'L', 'M' and 'D' a palette's light, mid and dark tones.
+	 * Vanilla's idiom for "the same plate, a different job" is an inlay	/**
+	 * Vanilla's idiom for "the same plate, a different job" is an inlay, and the comparator is the
+	 * worked example: its plate carries a piece of quartz set into it, drawn in four warm tones in
+	 * {@code block/comparator.png}, rows 6 to 10. A gate is the same plate with its own metal in
+	 * that same setting, so the block is not a repeater wearing a badge we invented — it is the
+	 * comparator's own shape, in iron, copper or gold.
 	 *
-	 * <p>The clock's two glyphs are mode badges, not a picture of the signal: a solid 2x2 square
-	 * for the square wave, a 2x1 bar for the pulse. Drawing the real waveform was tried twice and
-	 * abandoned — a glyph cannot know the delay setting, so it drew the same cycles at 1 tick and
-	 * at 4, a timing diagram that lied about the timing. A badge claims nothing it cannot keep.
+	 * <p>Recolouring rather than drawing has a second payoff: a resource pack that redraws the
+	 * comparator gets followed for free, at whatever resolution, as long as it keeps the palette.
+	 * Faithful 64x does, to the colour.
 	 */
-	private static final String[] GLYPH_SQUARE = {"##", "##"};
-	private static final String[] GLYPH_PULSE = {"##", ".."};
-
-	/** A clock face, so the block says what it is and not only what it does. */
-	private static final String[] GLYPH_DIAL = {".###.", "#.+.#", "#.++#", "#...#", ".###."};
-
-	private static final int GLYPH_X = 11;
-	private static final int GLYPH_Y = 9;
-	private static final int DIAL_X = 1;
-	private static final int DIAL_Y = 8;
-
-	/**
-	 * Vanilla's idiom for "the same plate, a different job" is an inlay, not a symbol: the
-	 * comparator is the repeater's plate with quartz set into it. Each gate follows that with the
-	 * metal its recipe calls for. The dark border is what makes it work — iron is barely brighter
-	 * than the stone it sits on, so the panel reads by its outline and its flatness, not its hue.
-	 */
-	private static final String[] GATE_INLAY = {
-			"DDDDDD", "DLLLLD", "DLLLLD", "DMMMMD", "DMMMMD", "DDDDDD"};
-	private static final int GATE_INLAY_X = 5;
-	private static final int GATE_INLAY_Y = 7;
+	private static final int[] QUARTZ = {0xFFEBDED4, 0xFFDDCBBE, 0xFFD3C7B9, 0xFFC5B8A9};
 
 	/**
 	 * Inversion is a bubble between the output torch and the panel, carved in the metal's dark
@@ -145,23 +136,38 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 * its face may imply an ingredient that is not there.
 	 */
 	private static final String[] GATE_BUBBLE = {".##.", "#..#", ".##."};
-	private static final int GATE_BUBBLE_X = 6;
-	private static final int GATE_BUBBLE_Y = 4;
 
 	/**
-	 * Three torches, like the comparator: one at each input flank and one at the output. Offsets
-	 * from the repeater's own torch, which sits at x=7..9, z=2..4. They stop two pixels short of
-	 * the plate's edge so they do not cover the shading that reads as its side.
+	 * Top right, clear of everything: the output torch stands over x=7..9 at the front, the inlay
+	 * fills the middle and the signal line runs across the back. It used to sit between the torch
+	 * and the inlay, where the comparator's composition left it no room.
 	 */
-	private static final int[][] GATE_TORCH_OFFSETS = {{-4, 5}, {4, 5}, {0, 0}};
+	private static final int GATE_BUBBLE_X = 11;
+	private static final int GATE_BUBBLE_Y = 2;
 
-	/** light, mid, dark, sampled from each ingot's own texture. */
+	/**
+	 * The same bubble as geometry, for a plate with the room for a round one. In units of the
+	 * glyph above — its centre and its radius — so the two forms cannot drift apart.
+	 */
+	private static final double BUBBLE_CX = 13.0;
+	private static final double BUBBLE_CY = 3.5;
+	private static final double BUBBLE_R = 1.75;
+
+	/**
+	 * Four tones per metal, lightest first, to stand in for the quartz's four — every one of them
+	 * lifted from that metal's own ingot texture, so the inlay is the colour of the thing the
+	 * recipe asks for and not an approximation of it.
+	 *
+	 * <p>A fifth follows, the ingot's darkest, which is what the inversion bubble is drawn in. The
+	 * inlay's own dark tone is not dark enough for that: iron's is {@code #A3A3A3} against a plate
+	 * of {@code #BBBBBB}, and a marker that faint is no marker.
+	 */
 	private static final Map<String, int[]> GATE_METALS = new LinkedHashMap<>();
 
 	static {
-		GATE_METALS.put("and_gate", new int[]{0xFFD8D8D8, 0xFFA8A8A8, 0xFF5E5E5E});
-		GATE_METALS.put("or_gate", new int[]{0xFFE77C56, 0xFFC15A36, 0xFF9C4529});
-		GATE_METALS.put("xor_gate", new int[]{0xFFFDF55F, 0xFFFAD64A, 0xFFB26411});
+		GATE_METALS.put("and_gate", new int[]{0xFFEDEDED, 0xFFD4D4D4, 0xFFBDBDBD, 0xFFA3A3A3, 0xFF7E7E7E});
+		GATE_METALS.put("or_gate", new int[]{0xFFFC9982, 0xFFE77C56, 0xFFC15A36, 0xFF9C4529, 0xFF6D3421});
+		GATE_METALS.put("xor_gate", new int[]{0xFFFDF55F, 0xFFFAD64A, 0xFFE9B115, 0xFFB26411, 0xFF752802});
 	}
 
 	/**
@@ -170,14 +176,30 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 * block, and a chip of the metal goes where the block carries its panel.
 	 */
 	private static final int[][] ICON_LINE = {{5, 9}, {6, 9}, {5, 10}, {6, 10}, {7, 10}, {8, 10}, {7, 11}, {8, 11}};
-	private static final String[] ICON_CHIP = {"DDDD", "DLLD", "DMMD"};
-	private static final int ICON_CHIP_X = 5;
-	private static final int ICON_CHIP_Y = 9;
+
+	/**
+	 * The icon needs its own answer: at this size the comparator's sprite draws three torches on a
+	 * plate five pixels deep and <b>no quartz at all</b>, so there is nothing to recolour. What
+	 * goes on the plate instead is the smallest shape that reads as a stone set into it rather
+	 * than a bar lying on it — which is what the four-by-three block of metal it replaces looked
+	 * like.
+	 */
+	private static final String[] ICON_STONE = {".L.", "LML", ".M."};
+	private static final int ICON_STONE_X = 5;
+	private static final int ICON_STONE_Y = 9;
 
 	/** The clock's icon keeps both torches, because the block has both. */
 	private static final String[] ICON_DIAL = {".##.", "#.+#", "#++#", ".##."};
 	private static final int ICON_DIAL_X = 5;
 	private static final int ICON_DIAL_Y = 8;
+
+	/**
+	 * The same dial as geometry, for an icon with the room for a round one. In units of the glyph
+	 * above — its centre and its radius — so the two forms cannot drift apart.
+	 */
+	private static final double ICON_DIAL_CX = 7.0;
+	private static final double ICON_DIAL_CY = 10.0;
+	private static final double ICON_DIAL_R = 2.0;
 
 	/**
 	 * A funnel, for the filter slot. Vanilla has no icon for this and would not: nothing in the
@@ -212,30 +234,184 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	private static final int FUNNEL_X = 2;
 	private static final int FUNNEL_Y = 3;
 
+	/** How many quads vanilla hangs around a lit torch. */
+	private static final int GLOW_QUADS = 6;
+
+	/**
+	 * Five pixels of clock: a gold rim, a pale dial and two hands. R is the rim, D the dial and H
+	 * the hands, which is as much as five pixels across will hold and exactly what a clock is.
+	 *
+	 * <p>One dial, and one only: the mode is which way the whole clock faces, not what its hands
+	 * are doing.
+	 */
+	private static final String[] GLYPH_CLOCK_DIAL = {
+			".RRR.",
+			"RDHDR",
+			"RHHDR",
+			"RDDDR",
+			".RRR."};
+
+	/**
+	 * Where the clock stands, as the centre of its post. The output torch occupies x = 7..9, so
+	 * this is its own width plus a pixel clear of it — a pixel that is there because at 4 the
+	 * clock crowded the torch, and moving it out reads better from every angle but one.
+	 */
+	private static final double CLOCK_CX = 3.0;
+	private static final double CLOCK_CZ = 3.0;
+
+	/** Where each region starts, in a sheet five pixels tall. */
+	private static final int CLOCK_DIAL_SIZE = 5;
+	private static final int CLOCK_RIM_U = 5;
+	private static final int CLOCK_POST_U = 10;
+
+	private static final Map<Character, Integer> CLOCK_FACE_PALETTE = new LinkedHashMap<>();
+
+	static {
+		CLOCK_FACE_PALETTE.put('R', CLOCK_RIM);
+		CLOCK_FACE_PALETTE.put('D', CLOCK_FACE);
+		CLOCK_FACE_PALETTE.put('H', CLOCK_HANDS);
+	}
+
 	/** Every GUI sprite is 16 x 16, the size of a slot. */
 	private static final int SPRITE_SIZE = 16;
+
+	/** The folder the 64x pack is built into, which is also the id Fabric registers it under. */
+	private static final String FAITHFUL_PACK = "faithful_64x";
+
+	private static final int FAITHFUL_SCALE = 4;
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	@InputFile
 	public abstract RegularFileProperty getMinecraftJar();
 
+	/**
+	 * An unpacked Faithful 64x resource pack, if the person building has one. Optional: without it
+	 * the task simply produces no 64x pack, and the mod is built exactly as before.
+	 */
+	@InputDirectory
+	@Optional
+	public abstract DirectoryProperty getFaithfulPack();
+
 	@OutputDirectory
 	public abstract DirectoryProperty getOutputDirectory();
 
 	@TaskAction
 	public void generate() throws IOException {
-		Path out = getOutputDirectory().get().getAsFile().toPath().resolve("assets/redstore");
-		Files.createDirectories(out);
-
-		filterSlotIcon(out);
+		Path root = getOutputDirectory().get().getAsFile().toPath();
 
 		try (ZipFile jar = new ZipFile(getMinecraftJar().get().getAsFile())) {
-			filterHopper(jar, out);
-			redstoneClock(jar, out);
-			logicGates(jar, out);
+			derive(new JarSource(jar), new Target(root.resolve("assets/redstore"), 1, true));
+			faithful(jar, root);
 		}
 	}
+
+	/** Every asset of one output, at that output's own scale. */
+	private void derive(Source source, Target target) throws IOException {
+		Files.createDirectories(target.out());
+
+		filterSlotIcon(target);
+		filterHopper(source, target);
+		redstoneClock(source, target);
+		logicGates(source, target);
+	}
+
+	/**
+	 * The same edits again, on Faithful 64x, as a resource pack the player can turn on.
+	 *
+	 * <p>It is derived and never committed, for the same reason the vanilla art is — and here the
+	 * licence says so outright. Faithful allows using and modifying their work in a mod, with
+	 * credit and a link, but not "as a substitute for Minecraft's graphics when default textures
+	 * otherwise wouldn't be allowed", which is exactly what shipping these files would be. So they
+	 * are built on the player's machine from the player's own copy of the pack, or not at all.
+	 *
+	 * <p>Only textures. Models, block states and the rest are resolution-independent and already
+	 * in the mod itself, so the pack overrides nothing but pixels.
+	 */
+	private void faithful(ZipFile jar, Path root) throws IOException {
+		if (!getFaithfulPack().isPresent()) {
+			return;
+		}
+
+		Path pack = getFaithfulPack().get().getAsFile().toPath();
+
+		if (!Files.isDirectory(pack.resolve("assets/minecraft/textures"))) {
+			throw new GradleException(pack + " does not look like an unpacked resource pack: "
+					+ "assets/minecraft/textures is not in it.");
+		}
+
+		Path out = root.resolve("resourcepacks/" + FAITHFUL_PACK + "/assets/redstore");
+		derive(new DirSource(pack), new Target(out, FAITHFUL_SCALE, false));
+		packMetadata(jar, root.resolve("resourcepacks/" + FAITHFUL_PACK));
+	}
+
+	/**
+	 * The pack's own `pack.mcmeta`, carrying the credit and the link Faithful's licence asks for.
+	 *
+	 * <p>Its format number is read from the game rather than written down, so it cannot go stale.
+	 *
+	 * <p>It is declared as a <b>range</b>, {@code min_format} to {@code max_format}, which is what
+	 * vanilla's own packs do in 26.3 and what Faithful does. The older single {@code pack_format}
+	 * is still parsed, but it pins the pack to one exact format: 26.3 serves resources at 97.1,
+	 * a lone {@code 97} reads as 97.0, and the game marks the pack broken in the list while
+	 * loading it anyway. A bare major at each end of a range covers every minor inside it.
+	 */
+	private void packMetadata(ZipFile jar, Path pack) throws IOException {
+		JsonObject version = readJson(new JarSource(jar), "version.json");
+		int format = version.getAsJsonObject("pack_version").get("resource_major").getAsInt();
+
+		JsonObject meta = new JsonObject();
+		JsonObject body = new JsonObject();
+		body.addProperty("description", "Redstore's blocks, derived from Faithful 64x by HARYA_ "
+				+ "and many others — https://faithfulpack.net");
+		body.addProperty("min_format", format);
+		body.addProperty("max_format", format);
+		meta.add("pack", body);
+
+		writeJson(pack, "pack.mcmeta", meta);
+	}
+
+	// ---------------------------------------------------------------- sources and targets
+
+	/** Where the vanilla art is read from: the game's own jar, or an unpacked resource pack. */
+	private interface Source {
+		InputStream open(String path) throws IOException;
+	}
+
+	private record JarSource(ZipFile jar) implements Source {
+		@Override
+		public InputStream open(String path) throws IOException {
+			ZipEntry entry = this.jar.getEntry(path);
+
+			if (entry == null) {
+				throw new GradleException(path + " is not in the Minecraft jar. "
+						+ "Either the version changed or vanilla renamed it.");
+			}
+
+			return this.jar.getInputStream(entry);
+		}
+	}
+
+	private record DirSource(Path root) implements Source {
+		@Override
+		public InputStream open(String path) throws IOException {
+			Path file = this.root.resolve(path);
+
+			if (!Files.isRegularFile(file)) {
+				throw new GradleException(file + " is missing from the resource pack. "
+						+ "Either the pack is incomplete or it renamed the file.");
+			}
+
+			return Files.newInputStream(file);
+		}
+	}
+
+	/**
+	 * One output. {@code scale} is how many pixels of this art make one pixel of vanilla's, so
+	 * every coordinate written for 16 x 16 multiplies by it; {@code models} is false for a
+	 * resource pack, which overrides textures and nothing else.
+	 */
+	private record Target(Path out, int scale, boolean models) {}
 
 	// ---------------------------------------------------------------- blocks
 
@@ -245,32 +421,196 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 * <p>Nothing is read from the jar here. It is drawn on an empty sprite, which is why the glyph
 	 * is the whole of it.
 	 */
-	private void filterSlotIcon(Path out) throws IOException {
-		BufferedImage icon = new BufferedImage(SPRITE_SIZE, SPRITE_SIZE, BufferedImage.TYPE_INT_ARGB);
-		stamp(icon, GLYPH_FUNNEL, FUNNEL_X, FUNNEL_Y, SLOT_ICON_GREY, 0, null);
+	private void filterSlotIcon(Target target) throws IOException {
+		int scale = target.scale();
+		int size = SPRITE_SIZE * scale;
+		BufferedImage icon = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 
-		writePng(out, "textures/gui/sprites/container/slot/filter.png", icon);
+		if (scale == 1) {
+			stamp(icon, GLYPH_FUNNEL, FUNNEL_X, FUNNEL_Y, SLOT_ICON_GREY, 0, null, scale);
+		} else {
+			funnel(icon, size, scale / 2);
+		}
+
+		writePng(target.out(), "textures/gui/sprites/container/slot/filter.png", icon);
 	}
 
-	private void filterHopper(ZipFile jar, Path out) throws IOException {
-		BufferedImage top = readPng(jar, "assets/minecraft/textures/block/hopper_top.png");
-		// The outer two-pixel ring of the top face becomes the frame.
-		recolour(top, BLOCK_WOOD, (x, y) -> Math.min(Math.min(x, y), Math.min(15 - x, 15 - y)) <= 1);
+	/**
+	 * The same funnel, drawn instead of stamped, for a sprite that has the pixels to spare.
+	 *
+	 * <p>Scaling the 16 x 16 glyph would give a four-pixel stroke at 64 x 64, and that is not what
+	 * a pack of that resolution does with a placeholder: Faithful's own slot icons are redrawn at
+	 * a <b>two-pixel</b> stroke, with the diagonals stepping a pixel at a time instead of four. So
+	 * this one is too — same shape, same proportions, finer line.
+	 *
+	 * <p>The shape is geometry rather than ASCII art because at this size it is geometry: a rim, a
+	 * pair of 45° walls, a spout and a rounded bottom, all of them measured in units of the small
+	 * design so the two cannot drift apart. The 16 x 16 version stays hand-placed, because at that
+	 * size every pixel is a decision.
+	 */
+	private static void funnel(BufferedImage icon, int size, int stroke) {
+		int unit = size / SPRITE_SIZE;
+		int top = 3 * unit;
+		int bottom = size - top;
 
-		BufferedImage side = readPng(jar, "assets/minecraft/textures/block/hopper_outside.png");
+		// The rim, then the walls closing in at 45° until they are the spout's width apart.
+		fillRect(icon, 2 * unit, top, 12 * unit, stroke, SLOT_ICON_GREY);
+
+		int left = 2 * unit;
+		int right = size - 2 * unit - stroke;
+		int y = top + stroke;
+
+		for (; left < 6 * unit; left++, right--, y++) {
+			fillRect(icon, left, y, stroke, 1, SLOT_ICON_GREY);
+			fillRect(icon, right, y, stroke, 1, SLOT_ICON_GREY);
+		}
+
+		// The spout, and then the two walls stepping in to meet and close it.
+		int curve = stroke + 1;
+		int straight = bottom - y - curve - stroke;
+
+		fillRect(icon, left, y, stroke, straight, SLOT_ICON_GREY);
+		fillRect(icon, right, y, stroke, straight, SLOT_ICON_GREY);
+		y += straight;
+
+		for (int step = 0; step < curve; step++, left++, right--, y++) {
+			fillRect(icon, left, y, stroke, 1, SLOT_ICON_GREY);
+			fillRect(icon, right, y, stroke, 1, SLOT_ICON_GREY);
+		}
+
+		fillRect(icon, left, y, right - left + stroke, stroke, SLOT_ICON_GREY);
+	}
+
+	private static void fillRect(BufferedImage image, int x, int y, int width, int height, int colour) {
+		for (int dy = 0; dy < height; dy++) {
+			for (int dx = 0; dx < width; dx++) {
+				image.setRGB(x + dx, y + dy, colour);
+			}
+		}
+	}
+
+	/**
+	 * The little clock's own texture: three regions of one 16 x 16 sheet, each mapped face for
+	 * face at the block's own density, so nothing is stretched.
+	 *
+	 * <pre>
+	 *   (0,0)  5 x 5  the dial
+	 *   (5,0)  5 x 5  the rim — what the clock looks like edge on
+	 *   (10,0) 2 x 2  the post it stands on
+	 * </pre>
+	 *
+	 * <p>Vanilla's own clock item was tried here first and does not survive being embedded: it is
+	 * an inventory icon, drawn round with soft edges against nothing, and mounted on a block those
+	 * edges read as a torn sticker. This is drawn instead — at 16 x 16 as pixels, above that as
+	 * geometry, the same way every other mark in this task is.
+	 */
+	private void clockFace(Target target) throws IOException {
+		int scale = target.scale();
+		int size = SPRITE_SIZE * scale;
+		BufferedImage sheet = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+
+		// Edge on, a clock is a gold rim with a shadow round it.
+		int rim = CLOCK_RIM_U * scale;
+		int side = CLOCK_DIAL_SIZE * scale;
+		fillRect(sheet, rim, 0, side, side, CLOCK_RIM);
+		outline(sheet, rim, 0, side, side, scale, CLOCK_EDGE);
+
+		// The post, in two shades so it has a lit side.
+		fillRect(sheet, CLOCK_POST_U * scale, 0, 2 * scale, 2 * scale, CLOCK_EDGE);
+		fillRect(sheet, CLOCK_POST_U * scale, 0, scale, 2 * scale, CLOCK_RIM);
+
+		if (scale == 1) {
+			stamp(sheet, GLYPH_CLOCK_DIAL, 0, 0, CLOCK_RIM, 0, CLOCK_FACE_PALETTE, 1);
+		} else {
+			dial(sheet, 0, scale);
+		}
+
+		writePng(target.out(), "textures/block/redstone_clock_face.png", sheet);
+	}
+
+	/**
+	 * One dial, drawn round, with its two hands.
+	 *
+	 * <p>It fills the same footprint the five-pixel glyph does — the whole of it but the four
+	 * corners — and that is not a detail. The disc's silhouette is two crossed boxes, so the model
+	 * shows the middle three rows of this region and the middle three columns of it; anything left
+	 * transparent inside those bands is a hole you can see the world through. A circle inscribed in
+	 * the region leaves exactly such gaps at the bands' corners, which is what a rounder texture
+	 * than the model bought the first time.
+	 *
+	 * <p>So the rim is the footprint, filled, and the face is a circle cut out of it. The rim comes
+	 * out a shade thicker at the corners, which is what the model's own outline does too.
+	 */
+	private static void dial(BufferedImage sheet, int x, int scale) {
+		int side = CLOCK_DIAL_SIZE * scale;
+		double centre = side / 2.0;
+
+		// Half a small pixel of rim and of hand, not a whole one. This is the whole reason for
+		// drawing the dial rather than scaling the glyph: at four times the resolution a line can
+		// be finer than the design it came from, which is what Faithful does with its own art.
+		double line = scale / 2.0;
+
+		fillRect(sheet, x, scale, side, side - 2 * scale, CLOCK_RIM);
+		fillRect(sheet, x + scale, 0, side - 2 * scale, side, CLOCK_RIM);
+		fillDisc(sheet, x + centre, centre, centre - line, CLOCK_FACE);
+
+		// Up, and out to the left: the long hand and the short one.
+		hand(sheet, x + centre, centre, centre * 0.7, -90, line, CLOCK_HANDS);
+		hand(sheet, x + centre, centre, centre * 0.45, 180, line, CLOCK_HANDS);
+	}
+
+	/** A filled circle, for the dial the ring and the hands go on. */
+	private static void fillDisc(BufferedImage image, double cx, double cy, double radius, int colour) {
+		for (int y = (int) (cy - radius); y <= cy + radius; y++) {
+			for (int x = (int) (cx - radius); x <= cx + radius; x++) {
+				double dx = x + 0.5 - cx;
+				double dy = y + 0.5 - cy;
+
+				if (dx * dx + dy * dy <= radius * radius
+						&& x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight()) {
+					image.setRGB(x, y, colour);
+				}
+			}
+		}
+	}
+
+	/** A rectangle's border, drawn inside it. */
+	private static void outline(BufferedImage image, int x, int y, int width, int height,
+			int stroke, int colour) {
+		fillRect(image, x, y, width, stroke, colour);
+		fillRect(image, x, y + height - stroke, width, stroke, colour);
+		fillRect(image, x, y, stroke, height, colour);
+		fillRect(image, x + width - stroke, y, stroke, height, colour);
+	}
+
+	private void filterHopper(Source source, Target target) throws IOException {
+		int s = target.scale();
+		Path out = target.out();
+
+		BufferedImage top = readPng(source, "assets/minecraft/textures/block/hopper_top.png");
+		// The outer two-pixel ring of the top face becomes the frame.
+		int edge = top.getWidth() - 1;
+		recolour(top, BLOCK_WOOD, (x, y) -> Math.min(Math.min(x, y), Math.min(edge - x, edge - y)) < 2 * s);
+
+		BufferedImage side = readPng(source, "assets/minecraft/textures/block/hopper_outside.png");
 		// The collar spans y=11..16 in the model and its faces declare no UV, so they default to
 		// v = 16 - y: rows 0..4 of this texture. Rows 0-1 are the top of it.
-		recolour(side, BLOCK_WOOD, (x, y) -> y <= 1);
+		recolour(side, BLOCK_WOOD, (x, y) -> y < 2 * s);
 
-		BufferedImage icon = readPng(jar, "assets/minecraft/textures/item/hopper.png");
+		BufferedImage icon = readPng(source, "assets/minecraft/textures/item/hopper.png");
 		// The icon's rim, following its isometric outline: the top edge, then the corners down.
-		recolour(icon, ITEM_WOOD, (x, y) -> y == 2
-				|| (y == 3 && (x == 2 || x == 3 || x == 12 || x == 13))
-				|| (y == 4 && (x == 1 || x == 2 || x == 13 || x == 14)));
+		// The ramp does the rest of the work — a pixel outside the hopper's greys is left alone —
+		// so this only has to say how far down the rim reaches and how far in it wraps.
+		recolour(icon, ITEM_WOOD, (x, y) -> y >= 2 * s && (y < 3 * s
+				|| (y < 5 * s && (x < 4 * s || x >= 12 * s))));
 
 		writePng(out, "textures/block/filter_hopper_top.png", top);
 		writePng(out, "textures/block/filter_hopper_outside.png", side);
 		writePng(out, "textures/item/filter_hopper.png", icon);
+
+		if (!target.models()) {
+			return;
+		}
 
 		JsonObject textures = new JsonObject();
 		textures.addProperty("particle", "redstore:block/filter_hopper_outside");
@@ -280,29 +620,31 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		textures.addProperty("inside", "minecraft:block/hopper_inside");
 
 		for (String[] pair : new String[][]{{"hopper", "filter_hopper"}, {"hopper_side", "filter_hopper_side"}}) {
-			JsonObject model = readJson(jar, "assets/minecraft/models/block/" + pair[0] + ".json");
+			JsonObject model = readJson(source, "assets/minecraft/models/block/" + pair[0] + ".json");
 			model.add("textures", textures.deepCopy());
 			writeJson(out, "models/block/" + pair[1] + ".json", model);
 		}
 	}
 
-	private void redstoneClock(ZipFile jar, Path out) throws IOException {
-		BufferedImage icon = readPng(jar, "assets/minecraft/textures/item/repeater.png");
-		stamp(icon, ICON_DIAL, ICON_DIAL_X, ICON_DIAL_Y, DIAL_GOLD, DIAL_DARK, null);
+	private void redstoneClock(Source source, Target target) throws IOException {
+		int s = target.scale();
+		Path out = target.out();
+
+		BufferedImage icon = readPng(source, "assets/minecraft/textures/item/repeater.png");
+
+		if (s == 1) {
+			stamp(icon, ICON_DIAL, ICON_DIAL_X, ICON_DIAL_Y, DIAL_GOLD, DIAL_DARK, null, s);
+		} else {
+			fineDial(icon, ICON_DIAL_CX * s, ICON_DIAL_CY * s, ICON_DIAL_R * s, s / 2.0,
+					DIAL_GOLD, DIAL_DARK);
+		}
+
 		writePng(out, "textures/item/redstone_clock.png", icon);
 
-		for (String mode : new String[]{"", "_pulse"}) {
-			String[] glyph = mode.isEmpty() ? GLYPH_SQUARE : GLYPH_PULSE;
+		clockFace(target);
 
-			for (String lit : new String[]{"", "_on"}) {
-				String base = lit.isEmpty() ? "repeater" : "repeater_on";
-				int colour = lit.isEmpty() ? ENGRAVED_OFF : ENGRAVED_ON;
-
-				BufferedImage plate = readPng(jar, "assets/minecraft/textures/block/" + base + ".png");
-				stamp(plate, glyph, GLYPH_X, GLYPH_Y, colour, 0, null);
-				stamp(plate, GLYPH_DIAL, DIAL_X, DIAL_Y, DIAL_GOLD, DIAL_DARK, null);
-				writePng(out, "textures/block/redstone_clock_top" + mode + lit + ".png", plate);
-			}
+		if (!target.models()) {
+			return;
 		}
 
 		// The repeater's model already encodes the delay as the position of a sliding torch, and a
@@ -319,14 +661,18 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 				boolean locked = suffix.equals("_locked");
 				boolean lit = suffix.equals("_on");
 
-				JsonObject model = readJson(jar,
+				JsonObject model = readJson(source,
 						"assets/minecraft/models/block/repeater_" + delay + "tick" + suffix + ".json");
 
-				String top = "redstore:block/redstone_clock_top" + mode + (lit ? "_on" : "");
+				JsonArray elements = model.getAsJsonArray("elements");
+				clockElements(!mode.isEmpty()).forEach(elements::add);
+
+				String top = "minecraft:block/repeater" + (lit ? "_on" : "");
 				JsonObject textures = new JsonObject();
 				textures.addProperty("particle", top);
 				textures.addProperty("slab", "minecraft:block/smooth_stone");
 				textures.addProperty("top", top);
+				textures.addProperty("clock", "redstore:block/redstone_clock_face");
 
 				// A locked model keeps the fixed torch and adds the bedrock bar, so it needs both
 				// texture keys. Setting only the bar left #unlit dangling and the game logged a
@@ -347,103 +693,250 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		}
 	}
 
-	private void logicGates(ZipFile jar, Path out) throws IOException {
+	private void logicGates(Source source, Target target) throws IOException {
+		int s = target.scale();
+		Path out = target.out();
+
 		for (Map.Entry<String, int[]> entry : GATE_METALS.entrySet()) {
 			String gate = entry.getKey();
-			int light = entry.getValue()[0];
-			int mid = entry.getValue()[1];
-			int dark = entry.getValue()[2];
+			int[] tones = entry.getValue();
+
+			// Quartz to metal, tone for tone, lightest to darkest.
+			Map<Integer, Integer> inlay = new LinkedHashMap<>();
+
+			for (int tone = 0; tone < QUARTZ.length; tone++) {
+				inlay.put(QUARTZ[tone], tones[tone]);
+			}
+
+			int mark = tones[QUARTZ.length];
 
 			Map<Character, Integer> metal = new LinkedHashMap<>();
-			metal.put('L', light);
-			metal.put('M', mid);
-			metal.put('D', dark);
+			metal.put('L', tones[0]);
+			metal.put('M', tones[1]);
+			metal.put('D', mark);
 
 			for (String suffix : new String[]{"", "_inverted"}) {
-				BufferedImage plate = readPng(jar, "assets/minecraft/textures/block/repeater.png");
-				eraseSignalLine(plate);
+				BufferedImage plate = readPng(source, "assets/minecraft/textures/block/comparator.png");
+				recolour(plate, inlay, (x, y) -> true);
 
-				if (!suffix.isEmpty()) {
-					stamp(plate, GATE_BUBBLE, GATE_BUBBLE_X, GATE_BUBBLE_Y, dark, 0, null);
+				if (!suffix.isEmpty() && s == 1) {
+					stamp(plate, GATE_BUBBLE, GATE_BUBBLE_X, GATE_BUBBLE_Y, mark, 0, null, s);
+				} else if (!suffix.isEmpty()) {
+					fineRing(plate, BUBBLE_CX * s, BUBBLE_CY * s, BUBBLE_R * s, s / 2.0, mark);
 				}
 
-				stamp(plate, GATE_INLAY, GATE_INLAY_X, GATE_INLAY_Y, light, 0, metal);
 				writePng(out, "textures/block/" + gate + "_top" + suffix + ".png", plate);
 
-				// One texture serves both models: what changes when a gate fires is its torches.
-				String top = "redstore:block/" + gate + "_top" + suffix;
-
-				for (String lit : new String[]{"", "_on"}) {
-					JsonObject source = readJson(jar,
-							"assets/minecraft/models/block/repeater_1tick" + lit + ".json");
-					JsonArray elements = source.getAsJsonArray("elements");
-
-					JsonArray kept = new JsonArray();
-					kept.add(elements.get(0));
-					gateTorches(elements, !lit.isEmpty()).forEach(kept::add);
-					source.add("elements", kept);
-
-					JsonObject textures = new JsonObject();
-					textures.addProperty("particle", top);
-					textures.addProperty("slab", "minecraft:block/smooth_stone");
-					textures.addProperty("top", top);
-					textures.addProperty(lit.isEmpty() ? "unlit" : "lit",
-							lit.isEmpty() ? "minecraft:block/redstone_torch_off" : "minecraft:block/redstone_torch");
-					source.add("textures", textures);
-
-					writeJson(out, "models/block/" + gate + suffix + lit + ".json", source);
+				if (!target.models()) {
+					continue;
 				}
+
+				// One texture serves every model of this gate: what changes when a signal arrives
+				// is which torches are lit, and a torch is geometry, not paint.
+				gateModels(source, out, gate + suffix, "redstore:block/" + gate + "_top" + suffix);
 			}
 
-			BufferedImage icon = readPng(jar, "assets/minecraft/textures/item/comparator.png");
+			BufferedImage icon = readPng(source, "assets/minecraft/textures/item/comparator.png");
 
 			for (int[] pixel : ICON_LINE) {
-				icon.setRGB(pixel[0], pixel[1], PLATE_GREY);
+				fill(icon, pixel[0] * s, pixel[1] * s, s, PLATE_GREY);
 			}
 
-			stamp(icon, ICON_CHIP, ICON_CHIP_X, ICON_CHIP_Y, light, 0, metal);
+			stamp(icon, ICON_STONE, ICON_STONE_X, ICON_STONE_Y, tones[0], 0, metal, s);
 			writePng(out, "textures/item/" + gate + ".png", icon);
 		}
 	}
 
 	/**
-	 * Three torches, from the repeater's fixed torch copied to each position.
+	 * The clock: a five-pixel disc on a post, standing beside the output torch.
 	 *
-	 * <p>In a lit model a torch drags six glow quads behind it, all positioned relative to it, so
-	 * the whole group moves together. Element order is identical in all of vanilla's repeater
-	 * models, which is what makes this safe to do positionally: 0 is the slab, 1 the sliding
-	 * torch, 2 the fixed torch, and in the lit models 3-8 are the fixed torch's glow quads.
-	 * Matching on geometry instead does not work — at two ticks the two torches' glow quads occupy
-	 * the same box.
+	 * <p>The disc is two boxes, a wide one crossed with a tall one, which is how pixel art draws a
+	 * circle and how a model gets a round silhouette out of a renderer that only has boxes. It has
+	 * its own depth — two pixels of it — rather than being a face on a case: a case is a box, and
+	 * a box around a round thing is the part you notice.
+	 *
+	 * <p>It stands where the output torch stands, in the same two pixels of depth, one place to
+	 * its left, on a post so that it is held up rather than lying against the stone. Its dial ends
+	 * up level with the torch's head, which is what makes the two read as a pair of instruments
+	 * rather than as a thing and some scenery.
+	 *
+	 * <p><b>The mode is which way the whole clock faces.</b> In square mode it looks along the
+	 * wire, the way the signal leaves; in pulse mode the whole thing is turned a quarter and looks
+	 * across it. From above — which is how a plate is read — the difference is the silhouette: a
+	 * bar lying across the plate, or one lying along it. Nothing is added and nothing is taken
+	 * away, so one object says both things.
 	 */
-	private static List<JsonElement> gateTorches(JsonArray elements, boolean lit) {
-		int count = lit ? 7 : 1;
-		List<JsonElement> moved = new java.util.ArrayList<>();
+	private static List<JsonObject> clockElements(boolean turned) {
+		JsonObject post = new JsonObject();
+		post.add("from", corner(CLOCK_CX - 1, 2, CLOCK_CZ - 1));
+		post.add("to", corner(CLOCK_CX + 1, 3, CLOCK_CZ + 1));
+		post.add("faces", postFaces());
 
-		for (int[] offset : GATE_TORCH_OFFSETS) {
-			for (int i = 2; i < 2 + count; i++) {
-				JsonObject element = elements.get(i).getAsJsonObject().deepCopy();
-				shift(element.getAsJsonArray("from"), offset);
-				shift(element.getAsJsonArray("to"), offset);
-				moved.add(element);
-			}
+		if (!turned) {
+			return List.of(post,
+					disc(CLOCK_CX - 2.5, 4, CLOCK_CZ - 1, CLOCK_CX + 2.5, 7, CLOCK_CZ + 1, false, 5, 3),
+					disc(CLOCK_CX - 1.5, 3, CLOCK_CZ - 1, CLOCK_CX + 1.5, 8, CLOCK_CZ + 1, false, 3, 5));
 		}
 
-		return moved;
+		// The same two boxes, turned a quarter about the post: the half-widths swap between the
+		// axes, so the disc now looks along the block's other one and the dial moves to the faces
+		// that axis presents.
+		return List.of(post,
+				disc(CLOCK_CX - 1, 4, CLOCK_CZ - 2.5, CLOCK_CX + 1, 7, CLOCK_CZ + 2.5, true, 5, 3),
+				disc(CLOCK_CX - 1, 3, CLOCK_CZ - 1.5, CLOCK_CX + 1, 8, CLOCK_CZ + 1.5, true, 3, 5));
 	}
 
-	private static void shift(JsonArray corner, int[] offset) {
-		corner.set(0, number(corner.get(0).getAsDouble() + offset[0]));
-		corner.set(2, number(corner.get(2).getAsDouble() + offset[1]));
+	/**
+	 * One box of the disc.
+	 *
+	 * <p>{@code across} and {@code high} are the box's face in texels, which is also how much of
+	 * the dial it shows: the wide box carries the dial's middle three rows, the tall one its middle
+	 * three columns, and between them the whole circle is covered exactly once.
+	 */
+	private static JsonObject disc(double x1, double y1, double z1, double x2, double y2, double z2,
+			boolean turned, int across, int high) {
+		int inset = (CLOCK_DIAL_SIZE - across) / 2;
+		int u1 = inset;
+		int u2 = CLOCK_DIAL_SIZE - inset;
+		int v1 = (CLOCK_DIAL_SIZE - high) / 2;
+		int v2 = CLOCK_DIAL_SIZE - v1;
+
+		JsonObject faces = new JsonObject();
+		JsonObject front = face("#clock", u1, v1, u2, v2);
+		JsonObject back = face("#clock", u2, v1, u1, v2);
+		JsonObject side = face("#clock", CLOCK_RIM_U, 0, CLOCK_RIM_U + 2, high);
+		JsonObject flat = face("#clock", CLOCK_RIM_U, 0, CLOCK_RIM_U + across, 2);
+
+		faces.add(turned ? "west" : "north", front);
+		faces.add(turned ? "east" : "south", back);
+		faces.add(turned ? "north" : "west", side);
+		faces.add(turned ? "south" : "east", side.deepCopy());
+		faces.add("up", flat);
+		faces.add("down", flat.deepCopy());
+
+		JsonObject element = new JsonObject();
+		element.add("from", corner(x1, y1, z1));
+		element.add("to", corner(x2, y2, z2));
+		element.add("faces", faces);
+
+		return element;
+	}
+
+	private static JsonObject postFaces() {
+		JsonObject faces = new JsonObject();
+
+		for (String side : new String[]{"north", "south", "west", "east"}) {
+			faces.add(side, face("#clock", CLOCK_POST_U, 0, CLOCK_POST_U + 2, 1));
+		}
+
+		return faces;
 	}
 
 	/** Vanilla writes whole coordinates without a decimal point, so keep it that way. */
-	private static JsonElement number(double value) {
-		if (value == Math.rint(value)) {
-			return GSON.toJsonTree((int) value);
+	private static JsonArray corner(double x, double y, double z) {
+		JsonArray corner = new JsonArray();
+
+		for (double value : new double[]{x, y, z}) {
+			corner.add(value == Math.rint(value) ? (Number) (int) value : (Number) value);
 		}
 
-		return GSON.toJsonTree(value);
+		return corner;
+	}
+
+	private static JsonObject face(String texture, int u1, int v1, int u2, int v2) {
+		JsonArray uv = new JsonArray();
+		uv.add(u1);
+		uv.add(v1);
+		uv.add(u2);
+		uv.add(v2);
+
+		JsonObject face = new JsonObject();
+		face.add("uv", uv);
+		face.addProperty("texture", texture);
+
+		return face;
+	}
+
+	/**
+	 * The sixteen models of one gate face, composed out of vanilla's own comparator models.
+	 *
+	 * <p>Three torches light independently — the two flanks follow their inputs, the front follows
+	 * the output — so a model is the plate plus a choice of lit or unlit for each. Both halves come
+	 * from files vanilla already ships: {@code comparator.json} has the three unlit torches and
+	 * {@code comparator_on_subtract.json} the three lit ones, each dragging the six glow quads a
+	 * lit torch needs. Nothing here moves a coordinate.
+	 *
+	 * <p>Elements are taken by index, because glow quads cannot be told apart by geometry — two of
+	 * them occupy the same box — and the index is then checked against the corner it should have.
+	 * A reordering in a future vanilla model fails the build instead of quietly putting a torch in
+	 * the wrong place.
+	 */
+	private void gateModels(Source source, Path out, String name, String top) throws IOException {
+		JsonArray unlit = readJson(source, "assets/minecraft/models/block/comparator.json")
+				.getAsJsonArray("elements");
+		JsonArray lit = readJson(source, "assets/minecraft/models/block/comparator_on_subtract.json")
+				.getAsJsonArray("elements");
+
+		// comparator.json:              0 slab, 1 left flank, 2 right flank, 3 front
+		// comparator_on_subtract.json:  0 slab, 1 front, 2 left flank, 3 right flank,
+		//                               4-9 left glow, 10-15 right glow, 16-21 front glow
+		// Left first, and left is +x: a model with no rotation is the gate facing south, whose
+		// left flank — FACING.getCounterClockWise() — is east. The block state file rotates it.
+		JsonElement slab = at(unlit, 0, 0, 0, 0);
+		JsonElement[] off = {at(unlit, 2, 10, 2, 11), at(unlit, 1, 4, 2, 11), at(unlit, 3, 7, 2, 2)};
+		JsonElement[] on = {at(lit, 3, 10, 2, 11), at(lit, 2, 4, 2, 11), at(lit, 1, 7, 2, 2)};
+		int[] glow = {10, 4, 16};
+
+		for (int mask = 0; mask < 8; mask++) {
+			JsonArray elements = new JsonArray();
+			elements.add(slab);
+
+			for (int torch = 0; torch < 3; torch++) {
+				if ((mask & (1 << torch)) == 0) {
+					elements.add(off[torch]);
+					continue;
+				}
+
+				elements.add(on[torch]);
+
+				for (int quad = 0; quad < GLOW_QUADS; quad++) {
+					elements.add(lit.get(glow[torch] + quad));
+				}
+			}
+
+			JsonObject textures = new JsonObject();
+			textures.addProperty("particle", top);
+			textures.addProperty("slab", "minecraft:block/smooth_stone");
+			textures.addProperty("top", top);
+			textures.addProperty("unlit", "minecraft:block/redstone_torch_off");
+			textures.addProperty("lit", "minecraft:block/redstone_torch");
+
+			JsonObject model = new JsonObject();
+			model.addProperty("ambientocclusion", false);
+			model.add("textures", textures);
+			model.add("elements", elements);
+
+			writeJson(out, "models/block/" + name + gateSuffix(mask) + ".json", model);
+		}
+	}
+
+	/** The element at that index, if its near corner is where it should be. */
+	private static JsonElement at(JsonArray elements, int index, int x, int y, int z) {
+		JsonArray from = elements.get(index).getAsJsonObject().getAsJsonArray("from");
+
+		if (from.get(0).getAsInt() != x || from.get(1).getAsInt() != y || from.get(2).getAsInt() != z) {
+			throw new GradleException("vanilla's comparator model has been reordered: element "
+					+ index + " starts at " + from + ", not [" + x + ", " + y + ", " + z + "]");
+		}
+
+		return elements.get(index);
+	}
+
+	/** Bit 0 is the left flank, bit 1 the right, bit 2 the output — the block state's own order. */
+	private static String gateSuffix(int mask) {
+		return ((mask & 1) != 0 ? "_left" : "")
+				+ ((mask & 2) != 0 ? "_right" : "")
+				+ ((mask & 4) != 0 ? "_on" : "");
 	}
 
 	// ---------------------------------------------------------------- pixels
@@ -471,78 +964,139 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		}
 	}
 
-	/** Engrave an ASCII-art glyph onto a texture. '.' is always left alone. */
+	/**
+	 * Engrave an ASCII-art glyph onto a texture. '.' is always left alone.
+	 *
+	 * <p>The glyph is written once, for a 16 x 16 texture, and drawn at {@code scale} pixels per
+	 * glyph pixel. That is dimensionally right rather than merely convenient: a block occupies the
+	 * same space in the world whatever its texture's resolution, so a mark four pixels wide on a
+	 * 64 x 64 plate is exactly as big as a one-pixel mark on a 16 x 16 one. What a scaled glyph
+	 * does not gain is detail — the mod's own marks stay as coarse as they were drawn, next to the
+	 * finer art around them.
+	 */
 	private static void stamp(BufferedImage image, String[] glyph, int x0, int y0,
-			int colour, int accent, Map<Character, Integer> palette) {
+			int colour, int accent, Map<Character, Integer> palette, int scale) {
 		for (int dy = 0; dy < glyph.length; dy++) {
 			String line = glyph[dy];
 
 			for (int dx = 0; dx < line.length(); dx++) {
 				char c = line.charAt(dx);
+				Integer ink = null;
 
 				if (c == '#') {
-					image.setRGB(x0 + dx, y0 + dy, colour);
+					ink = colour;
 				} else if (c == '+' && accent != 0) {
-					image.setRGB(x0 + dx, y0 + dy, accent);
+					ink = accent;
 				} else if (palette != null && palette.containsKey(c)) {
-					image.setRGB(x0 + dx, y0 + dy, palette.get(c));
+					ink = palette.get(c);
+				}
+
+				if (ink != null) {
+					fill(image, (x0 + dx) * scale, (y0 + dy) * scale, scale, ink);
 				}
 			}
 		}
 	}
 
 	/**
-	 * Rub out the redstone line the repeater texture paints along its torch track.
+	 * The marks the mod draws itself, at a resolution fine enough to draw them properly.
 	 *
-	 * <p>A gate has no sliding torch and nothing travels that path, so the line would be
-	 * decoration that lies. Erased pixels take the colour three columns to their left, which on
-	 * this texture is always plain plate, so vanilla's own shading noise carries over instead of a
-	 * flat patch.
+	 * <p>A glyph scaled up keeps its shape and gains nothing: at 64 x 64 a ring authored on a
+	 * 4 x 3 grid is a ring of four-pixel blocks, which next to Faithful's own curves reads as the
+	 * only thing on the block that did not get redrawn. These do the same shapes in the space the
+	 * bigger texture actually has — circles that are round, and engravings with an edge.
+	 *
+	 * <p>Everything is measured in units of the 16 x 16 design, so the two forms cannot drift: the
+	 * fine ring is centred where the small one is centred, and covers the same pixels of the block.
 	 */
-	private static void eraseSignalLine(BufferedImage image) {
-		for (int y = 0; y < 16; y++) {
-			for (int x = 3; x < 16; x++) {
-				int pixel = image.getRGB(x, y);
-				int r = (pixel >> 16) & 0xFF;
-				int g = (pixel >> 8) & 0xFF;
-				int b = pixel & 0xFF;
+	private static void fineRing(BufferedImage image, double cx, double cy, double radius,
+			double stroke, int colour) {
+		int from = (int) Math.floor(cx - radius - stroke);
+		int to = (int) Math.ceil(cx + radius + stroke);
 
-				if (r > g + 20 || (r == 120 && g == 120 && b == 120)) {
-					image.setRGB(x, y, image.getRGB(x - 3, y));
+		for (int y = (int) Math.floor(cy - radius - stroke); y <= (int) Math.ceil(cy + radius + stroke); y++) {
+			for (int x = from; x <= to; x++) {
+				if (x < 0 || y < 0 || x >= image.getWidth() || y >= image.getHeight()) {
+					continue;
 				}
+
+				double dx = x + 0.5 - cx;
+				double dy = y + 0.5 - cy;
+
+				if (Math.abs(Math.sqrt(dx * dx + dy * dy) - radius) <= stroke / 2.0) {
+					image.setRGB(x, y, colour);
+				}
+			}
+		}
+	}
+
+	/** A clock face: a ring, and two hands at the angles a clock's are drawn at. */
+	private static void fineDial(BufferedImage image, double cx, double cy, double radius,
+			double stroke, int gold, int dark) {
+		fineRing(image, cx, cy, radius, stroke, gold);
+
+		// Up for the long hand, and out to the right for the short one, as on the vanilla clock.
+		hand(image, cx, cy, radius * 0.72, -90, stroke, dark);
+		hand(image, cx, cy, radius * 0.48, -20, stroke, dark);
+	}
+
+	/**
+	 * A hand, drawn from the middle outwards.
+	 *
+	 * <p>The stroke is centred on the line rather than hung off it: a hand two pixels thick drawn
+	 * from the centre of a dial sits a pixel to the right and a pixel below where it should, and on
+	 * a five-pixel face that is the difference between a clock and a smudge.
+	 */
+	private static void hand(BufferedImage image, double cx, double cy, double length,
+			double degrees, double stroke, int colour) {
+		double radians = Math.toRadians(degrees);
+		int thickness = Math.max(1, (int) Math.round(stroke));
+		double offset = thickness / 2.0;
+
+		for (double along = 0; along <= length; along += 0.25) {
+			double x = cx + Math.cos(radians) * along - offset;
+			double y = cy + Math.sin(radians) * along - offset;
+
+			for (int dy = 0; dy < thickness; dy++) {
+				for (int dx = 0; dx < thickness; dx++) {
+					int px = (int) Math.round(x) + dx;
+					int py = (int) Math.round(y) + dy;
+
+					if (px >= 0 && py >= 0 && px < image.getWidth() && py < image.getHeight()) {
+						image.setRGB(px, py, colour);
+					}
+				}
+			}
+		}
+	}
+
+	/** One pixel of a 16 x 16 design, which at this scale is a square of them. */	/** One pixel of a 16 x 16 design, which at this scale is a square of them. */
+	private static void fill(BufferedImage image, int x, int y, int scale, int colour) {
+		for (int dy = 0; dy < scale; dy++) {
+			for (int dx = 0; dx < scale; dx++) {
+				image.setRGB(x + dx, y + dy, colour);
 			}
 		}
 	}
 
 	// ---------------------------------------------------------------- io
 
-	private static BufferedImage readPng(ZipFile jar, String path) throws IOException {
-		try (InputStream in = open(jar, path)) {
-			BufferedImage source = ImageIO.read(in);
+	private static BufferedImage readPng(Source source, String path) throws IOException {
+		try (InputStream in = source.open(path)) {
+			BufferedImage png = ImageIO.read(in);
 			// Palette images come back indexed; copy into ARGB so every pixel is writable.
-			BufferedImage copy = new BufferedImage(source.getWidth(), source.getHeight(),
+			BufferedImage copy = new BufferedImage(png.getWidth(), png.getHeight(),
 					BufferedImage.TYPE_INT_ARGB);
-			copy.getGraphics().drawImage(source, 0, 0, null);
+			copy.getGraphics().drawImage(png, 0, 0, null);
 
 			return copy;
 		}
 	}
 
-	private static JsonObject readJson(ZipFile jar, String path) throws IOException {
-		try (InputStream in = open(jar, path)) {
+	private static JsonObject readJson(Source source, String path) throws IOException {
+		try (InputStream in = source.open(path)) {
 			return GSON.fromJson(new java.io.InputStreamReader(in, StandardCharsets.UTF_8), JsonObject.class);
 		}
-	}
-
-	private static InputStream open(ZipFile jar, String path) throws IOException {
-		ZipEntry entry = jar.getEntry(path);
-
-		if (entry == null) {
-			throw new GradleException(path + " is not in the Minecraft jar. "
-					+ "Either the version changed or vanilla renamed it.");
-		}
-
-		return jar.getInputStream(entry);
 	}
 
 	private static void writePng(Path root, String name, BufferedImage image) throws IOException {
