@@ -2,8 +2,8 @@
 
 `redstore:chunk_loader`
 
-A full block that keeps the chunk it stands in permanently force-loaded and fully ticking, with no
-fuel, no redstone control and nothing to configure.
+A block that keeps the chunk it stands in permanently force-loaded and fully ticking, with no
+fuel, no redstone control and nothing to configure. A right-click switches it off and on.
 
 **Its vanilla equivalent is an ender pearl stasis chamber**, not `/forceload`. Since 1.21.2 a
 thrown ender pearl keeps the chunk it occupies loaded and fully ticking, and a stasis chamber — a
@@ -18,15 +18,17 @@ licenses this block is that the same result is already buildable in survival.
 
 ## 1. Behaviour
 
-* While the block exists, its own chunk (1 × 1) is force-loaded at **ticket level 31** — the same
-  level a player produces. Block entities tick, redstone runs, random ticks fire, entities inside
+* While the block exists, its own chunk (1 × 1) is force-loaded at the **entity-ticking level** —
+  the same level a player produces, and by the same mechanism: vanilla's own `FORCED` ticket. Block entities tick, redstone runs, random ticks fire, entities inside
   the chunk tick, hoppers move items, furnaces smelt, crops grow.
 * The load **persists across server restarts**. The chunk is loaded again as soon as the dimension
   is loaded, without anyone having to visit it.
-* The load ends only when the block is broken, including by an explosion.
-* No redstone control, no fuel, no owner-online requirement. Placed means loaded.
-* Exactly its own chunk. To cover a larger area, place more loaders — this keeps the cost of a
-  build visible and linear.
+* The load ends when the block is broken, including by an explosion, or when a player switches
+  it off.
+* **A right-click toggles it.** Switched off, the block releases its chunk and keeps everything
+  else: it is still there, still crafted, still remembers nothing it needs to. Switched on again,
+  it takes the chunk back.
+* No redstone control, no fuel, no owner-online requirement. Placed and switched on means loaded.
 
 ### 1.1 Documented limitations
 
@@ -41,13 +43,29 @@ These are vanilla behaviours, not bugs, and must be stated in the mod descriptio
 * The block does not extend the *entity ticking* border beyond its own chunk, so contraptions that
   straddle a chunk border need a loader on each side.
 
+### 1.2 Why a switch, when nothing else here has one
+
+A loader is the one block in the mod whose cost is paid by the server rather than by the builder,
+and the only way to stop paying it used to be to break the block — which loses the crafting and,
+for a player who does not remember where the loaders are, loses the ability to find them at all.
+
+The switch is safe to have because **it cannot be worked by a circuit**. Redstone control would
+make a chunk loader something a machine turns on, which is a different block with a different cost;
+a hand is the only thing that moves this one. And it is safe to *find*, because the pearl says
+which way it is set from across the room (section 8).
+* Exactly its own chunk. To cover a larger area, place more loaders — this keeps the cost of a
+  build visible and linear.
+
 ## 2. Ticket management
 
 ### 2.1 Acquiring and releasing
 
-* Acquire: `serverLevel.setChunkForced(chunkX, chunkZ, true)`.
+* Acquire: `serverLevel.setChunkForced(chunkX, chunkZ, true)`, whose return value says whether
+  the ticket was ours to add.
 * Release: `serverLevel.setChunkForced(chunkX, chunkZ, false)`, **only** when no other Redstore
   chunk loader remains in that chunk and the force-load was registered by us.
+* A loader that is switched off is not a loader: it does not appear in the records at all, so
+  switching one off is a release and switching it on is an acquire.
 * Vanilla persists forced chunks in the dimension's saved data, which is what gives us free
   restart persistence.
 
@@ -65,12 +83,26 @@ Releasing blindly would silently undo an operator's `/forceload`. The mod theref
 Release rule: unforce a chunk only if, after removing this block, `loaders` has no entry left for
 that chunk **and** the chunk is not in `preexisting`.
 
+`preexisting` fills itself on the way in: `setChunkForced(..., true)` returns whether the ticket
+was added, so a `false` means somebody else had already forced that chunk — see section 11.
+
 ### 2.3 Deferring the call
 
 `ServerLevel#setChunkForced` synchronously loads the chunk. Calling it from inside a chunk-load
 callback re-enters the chunk system and is known to deadlock with C2ME. Therefore **every**
 acquire/release is scheduled onto the server thread for the next tick via `server.execute(...)`
 instead of being run inline from a block-entity `onLoad` or from a chunk event.
+
+**The same rule covers reading, and not only writing.** The chunk-load callback runs *inside* the
+chunk source, on a chunk it is still finishing, so everything it reads has to come off the chunk it
+was handed — `chunk.getBlockState(pos)` — and never off the level. `Level#getBlockState` sends the
+question back through the chunk source, which blocks the server thread until the chunk is full;
+the chunk becomes full only when this callback returns, and the server hangs at `Preparing spawn
+area` with no error of any kind.
+
+Reconciliation (§2.4) is the exception, and deliberately: it runs from `SERVER_STARTED`, outside
+the chunk system, where asking the level for a block state is a plain blocking chunk load and is
+what is wanted.
 
 ### 2.4 Startup reconciliation
 
@@ -102,12 +134,14 @@ saved data for no one to read.
 
 | Action | Effect |
 | --- | --- |
-| Right-click with an empty hand | Action-bar status: `message.redstore.chunk_loader.status` — the chunk's coordinates and dimension. No GUI. |
+| Right-click with an empty hand | Switches the loader off or on, and says which on the action bar. |
 | Break | Releases the chunk (subject to §2.2) and drops the block item. |
 
-Visual state: the block always renders "active" — there is no off state. It emits light level 7 and
-spawns two `ParticleTypes.PORTAL`-style particles per second on the client above the block so that
-active loaders are findable in a dark base.
+There is no GUI and no status read-out: what a status message would have said — whether this chunk
+is loaded — is what the pearl says by being there or not.
+
+Light level 7 while switched on, and nothing while off, so a working loader is findable in a dark
+base and a switched-off one is visibly not working.
 
 ## 5. Block properties
 
@@ -115,61 +149,168 @@ active loaders are findable in a dark base.
 BlockBehaviour.Properties.of()
     .strength(3.0F)
     .requiresCorrectToolForDrops()
-    .sound(SoundType.METAL)
-    .lightLevel(state -> 7)
+    .sound(SoundType.AMETHYST)
+    .lightLevel(state -> state.getValue(BlockStateProperties.ENABLED) ? 7 : 0)
     .pushReaction(PushReaction.BLOCK)   // pistons must not move it
+    .noOcclusion()                      // it is twelve pixels tall, not a cube
 ```
 
-* No block state properties; all data lives in the block entity.
+* One block state property, vanilla's own `enabled`. Everything else lives in the block entity.
+* The shape is the **enchanting table's**: `[0, 0, 0]` to `[16, 12, 16]`, twelve pixels tall.
 * `PushReaction.BLOCK` is deliberate: a moving chunk loader would mean tickets churning every
   redstone tick.
 * Not immune to explosions — it drops normally.
 
 ## 6. Block entity
 
-| NBT key | Type | Meaning |
-| --- | --- | --- |
-| `Claimed` | boolean | whether this block currently holds the chunk claim (used to detect a half-applied state after a crash) |
+**It stores nothing and it does not tick.** What a loader has claimed is kept once per dimension,
+in the saved data of section 2.2, because that answer has to outlive the block's chunk being
+unloaded — which is precisely what a block entity does not do.
 
-It does **not** tick. Its only job is to register itself with `ChunkLoaderManager` on
-`onLoad`/`setPlacedBy` and to be found again by the reconciliation pass.
+What it is for is being *found*. A chunk keeps a map of its block entities, so when a chunk loads
+the manager can ask it for loaders in one lookup rather than walking a hundred thousand block
+states. That is the repair path: a loader the record has never heard of — a world restored from a
+backup, or one where the mod was uninstalled for a while — claims its chunk again the first time
+anybody visits it.
+
+A loader that is *switched off* claims nothing, so the hook checks `enabled` before asking.
+
+It has a second job on the client, which came later and costs it nothing: a block entity is what a
+block entity renderer hangs on, and the pearl is drawn by one (§8.2). That needs no field either —
+the renderer reads `enabled` off the block state and the bob off the world clock.
 
 Removal must distinguish a real break from a chunk/world unload:
 
-* Release on the block's removal hook (`onRemove` / `affectNeighborsAfterRemoval` — `TODO(verify)`
-  which one is current in 26.3), i.e. when the block state actually changes to something else.
+* Release on the block's removal hook, `affectNeighborsAfterRemoval` (section 11), i.e. when the
+  block state actually changes to something else.
 * **Never** release from `BlockEntity#setRemoved`, which also fires on world shutdown.
 
 ## 7. Recipe
 
-Shaped, yields 1. Legend: `I` iron ingot · `P` ender pearl · `E` eye of ender.
+Shaped, yields 1. Legend: `P` ender pearl · `A` amethyst shard · `O` obsidian.
 
 ```
-I  P  I
-P  E  P
-I  P  I
+.  P  .
+A  O  A
+O  O  O
 ```
 
-4 iron ingots, 4 ender pearls, 1 eye of ender — mid-game (needs a blaze rod and pearls), thematic
-(ender = "this place stays real even when you are not looking at it"), and symmetric so it is easy
-to remember. Servers that consider it too cheap can disable the block entirely or cap it; the
-recipe itself is fixed.
+**It is the enchanting table's recipe, part for part.** Vanilla's is `" B "`, `"D#D"`, `"###"` —
+book, diamonds, obsidian. This one puts a pearl where the book goes and amethyst where the
+diamonds go, which is exactly what the block puts where the table puts them (section 8).
 
-Unlock trigger: `has(Items.ENDER_EYE)`.
+Read as a parts list: the pearl because a pearl is what holds a chunk open in vanilla, the amethyst
+because the block wears it, the obsidian because the block is made of it.
+
+Unlock trigger: `has(Items.ENDER_PEARL)`.
+
+It is cheaper than the four-iron, four-pearl version an earlier draft asked for, and that is a
+decision rather than an oversight: the contraption it replaces — a stasis chamber — costs eight
+buckets of water, a block of soul sand and one pearl, so one pearl and some obsidian is the same
+order of price. With the configuration gone (see [../conventions.md](../conventions.md) §6), a
+server that wants them scarcer removes the recipe with a data pack; there is no cap to turn.
 
 ## 8. Appearance
 
-* Full cube. Sides: a dark polished-stone/iron frame with an inset eye-like core; top and bottom
-  carry the same frame with a small lens in the centre.
-* Textures: `chunk_loader_side.png`, `chunk_loader_top.png` (16 × 16 each; the bottom reuses the
-  top).
-* Item model: the block model.
-* No animation in phase 1; an emissive overlay on the core is optional polish.
+**An enchanting table with a pearl instead of a book.** That is the whole design, and it is
+borrowed rather than invented: vanilla already has a block whose vocabulary is *an object held in
+the air above a pedestal*, and nobody has to be told what it means.
+
+* The **pedestal** is the enchanting table, taken whole: its shape — twelve pixels tall — and its
+  obsidian.
+* The **corners** are the table's own gems, in the table's size and shape, recoloured from diamond
+  to **amethyst**.
+* The **cloth** is the table's own cloth, dyed from red to the **teal of the ender pearl**: the
+  cloth is the colour of what it holds. It is also the colour the block had spare — the table was
+  cold gems on warm cloth, and moving the gems to amethyst left the cold with nowhere to go.
+* The **pearl** floats where the table's book floats, bobs the way the book bobs, and **faces the
+  camera**. It is there when the loader is on and gone when it is off, which is the entire state
+  read-out this block needs.
+
+### 8.1 How the pedestal is derived
+
+Everything in the pedestal comes out of vanilla's own art, like every other texture in the mod
+([../conventions.md](../conventions.md) §10):
+
+* `enchanting_table_top` and `enchanting_table_side` are copied with **two substitutions**, both
+  colour for colour:
+  * the five pale teals of the diamond corners become five tones of `block/amethyst_block`,
+    lightest for lightest;
+  * the reds of the cloth become the teal of `item/ender_pearl` **at their own brightnesses** —
+    only the hue moves, so the folds and the shadow under the pearl are still the ones Mojang
+    drew. It is the same trade the gates' inlay makes with the comparator's quartz, and the task
+    shares the code for it.
+
+  Nothing else in either file is touched: the obsidian is untouched obsidian.
+
+  The cloth is **eight** tones and not five, because Faithful adds three of its own — see
+  [../conventions.md](../conventions.md) §10.3. A tone the list does not name stays red, and a
+  cloth half-dyed is worse than one not dyed at all.
+* The model is `block/enchanting_table.json`, with those two textures swapped in and
+  `enchanting_table_bottom` referenced unchanged. It is the pedestal and nothing else.
+
+### 8.2 The pearl is drawn, not built
+
+**It is the ender pearl item, turned to face the viewer.** That is not a trick invented here: it is
+how vanilla draws a pearl that is in the air. A thrown pearl is never seen edge-on — and a flat
+sprite that always faces you is rounder than any ball that can be built out of boxes. A pearl held
+in stasis is a thrown pearl stopped mid-flight, so it is drawn the way a thrown pearl is drawn.
+
+**It aims at the camera's position, not at its orientation**, and that is the one place this parts
+company with `ThrownItemRenderer` (and with the conduit's wind, which is the same code). Turning the
+pose by the camera's orientation aligns a sprite with the *screen*, which is not the same as
+pointing it at the *viewer*: anything away from the middle of the screen is then seen at an angle
+and shows its edge, and walking sideways without turning does not move the sprite at all. Both of
+those are visible on a block you stand next to.
+
+Vanilla can afford the cheaper one because the things it billboards are small, fast and usually in
+front of you. So this takes the vector from the pearl to the camera and turns by its yaw and its
+pitch — `atan2(dx, dz)` about Y, then `−atan2(dy, √(dx²+dz²))` about X, in that order — which puts
+the sprite exactly perpendicular to the line of sight from wherever it is looked at.
+
+**The float is the book's, to the number**, out of `EnchantTableRenderer`: three quarters of the way
+up the block, then a tenth more, then `sin(time × 0.1) × 0.01` — a bob of a sixth of a pixel with a
+period of about three seconds. The pedestal is the enchanting table's height, so the pearl ends up
+exactly where the book floats. The book counts its own ticks because its block entity has somewhere
+to keep them; ours keeps nothing (§6), so the world's clock counts and the block's position sets the
+phase, which is what stops a row of loaders bobbing in lockstep.
+
+This costs three things, and they are **the same three Mojang pays for the book**:
+
+* A **block entity renderer** runs per frame for every visible loader. It is bounded by
+  `getViewDistance()`, as the filter hopper's is.
+* Past that distance the pearl is not drawn, so a working loader looks empty from far away.
+* **The block item has no pearl**, because a block entity renderer does not draw the item model.
+  The enchanting table's item has no book for exactly this reason — its item definition is a plain
+  `minecraft:model` pointing at `block/enchanting_table`, and the table is not among the special
+  model renderers.
+
+#### What was tried first, and why it was wrong
+
+The pearl was originally **built**, as boxes in the block model, so that it would be part of the
+baked chunk mesh and cost nothing per frame. Three shapes were built and all three failed, and the
+reason is worth keeping because it is a general one.
+
+* **Stacked slabs** — wide in the middle, narrow at the ends — are a circle from the front and a
+  square from above. They read as a spool.
+* **A ring built as a cross**, a band with a lip in front and behind, only cuts the corners it can
+  reach: nick them and it is still a square, cut them properly and it is plainly a cross.
+* **Two squares at 45°**, which is the trick that suggests itself next, give an eight-pointed star.
+  An octagon is where two squares *overlap*, and boxes in a model can only be added together, never
+  intersected.
+* A **voxelised sphere**, measured rather than designed and merged greedily into 26 disjoint boxes,
+  finally did look round — at the price of 26 boxes, a generated texture and a second model.
+
+So the shape was reachable, and it was still the wrong answer: twenty-six boxes to approximate what
+one camera-facing sprite gives exactly, in a block whose own source — the enchanting table — had
+already solved it the other way. Design rule 4 says to copy vanilla's answer rather than invent a
+better one, and that applies to how a thing is drawn as much as to how it behaves.
 
 ## 9. Loot and data files
 
-* Loot table: drops itself (requires a stone-tier pickaxe, per `minecraft:needs_stone_tool`).
-* Tags: `minecraft:mineable/pickaxe`, `minecraft:needs_stone_tool`.
+* Loot table: drops itself.
+* Tags: `minecraft:mineable/pickaxe` and `minecraft:needs_diamond_tool` — obsidian's own tier,
+  which the block is mostly made of, and which anyone who crafted one has already reached.
 * **A recipe-unlock advancement**, which is not optional: a recipe only appears in the crafting
   table's book once something unlocks it, and without one the block is craftable but invisible to
   anyone who does not already know the shape. It lives in
@@ -261,14 +402,48 @@ it is actively harmful to the server.
 4. A contraption crossing a chunk border needs a loader per chunk; `/forceload query` (or
    `/redstore loaders list`) is the way to check.
 
-## 11. API verification checklist (26.3)
+## 11. What 26.3 actually provides
 
-- [ ] `ServerLevel#setChunkForced(int, int, boolean)` still exists and still writes to persistent
-      saved data.
-- [ ] Whether 26.3 exposes a first-class chunk-ticket API that would be preferable
-      (`ServerChunkCache#addRegionTicket` with a custom `TicketType`), and whether such tickets
-      persist across restarts — if they do not, `setChunkForced` remains the right call.
-- [ ] `SavedData` registration API (`SavedDataType` / codec-based factory in recent versions).
-- [ ] The current block removal hook name (`onRemove` vs `affectNeighborsAfterRemoval`).
-- [ ] `ServerLifecycleEvents` / `ServerWorldEvents` entry points in Fabric API 0.161.0+26.3.
-- [ ] `NaturalSpawner` / `BaseSpawner` player checks, to back the claims in section 10.
+Read off the decompiled jar. Everything this block was specified against is there, and two details
+are better than the spec assumed.
+
+**`ServerLevel#setChunkForced(int, int, boolean)`** exists and is the right call. It goes to
+`ServerChunkCache#updateChunkForced` and on to `TicketStorage#updateChunkForced`, which adds a
+ticket of type `TicketType.FORCED` at `ChunkMap.FORCED_TICKET_LEVEL`.
+
+**Forced chunks persist because tickets do.** `TicketStorage` is itself a `SavedData`, with its own
+`CODEC` and `SavedDataType`, and `TicketType.FORCED` carries `FLAG_PERSIST` — its flags are
+`PERSIST | LOADING | SIMULATION | KEEP_DIMENSION_ACTIVE`, with no timeout. Restart persistence is
+vanilla's, and free.
+
+**The ticket level is the entity-ticking one, by construction.**
+`ChunkMap.FORCED_TICKET_LEVEL = ChunkLevel.byStatus(FullChunkStatus.ENTITY_TICKING)`, which is why
+section 1 can promise entity ticking rather than hope for it.
+
+**A ticket type of our own is not reachable.** `TicketType`'s constructor is public but its
+`register` is private and persistence is by registered name, so a custom persistent type would need
+a mixin. `setChunkForced` stays, and with it the shared-set problem section 2.2 exists to solve.
+
+**`setChunkForced` answers the `preexisting` question by itself.** It returns whether the ticket was
+actually *added*, so a `false` on acquiring means the chunk was already forced by somebody else —
+which is exactly what section 2.2 keeps a set for, obtained without reading vanilla's set at all.
+
+**`SavedData` is codec-based now.** A `SavedDataType(Identifier, Supplier<T>, Codec<T>, DataFixTypes)`
+handed to `serverLevel.getDataStorage().computeIfAbsent(type)`. The storage class is
+`SavedDataStorage`, not `DimensionDataStorage`.
+
+**The removal hook is `affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean)`.**
+`onRemove` is gone from `BlockBehaviour` entirely, so section 6's open question resolves to the one
+it already guessed at.
+
+**Fabric's events are there**, with one rename: `ServerLifecycleEvents.SERVER_STARTED` as written,
+but the per-world one is **`ServerLevelEvents`** (`Load` / `Unload`), not `ServerWorldEvents`.
+
+**Section 10's spawning claims hold.** `NaturalSpawner` calls `getNearestPlayer` and gates on
+`isRightDistanceToPlayerAndSpawnPoint`; `BaseSpawner` keeps a `requiredPlayerRange` and an
+`isNearPlayer` check. Neither can fire with nobody in the dimension.
+
+One more datum, for section 1's argument rather than for the code: **the ender pearl's own ticket**
+is `TicketType.ENDER_PEARL`, flags `LOADING | SIMULATION | KEEP_DIMENSION_ACTIVE` with a 40-tick
+timeout. A pearl in flight simulates its chunk, which is precisely why a stasis chamber is this
+block's vanilla equivalent — and the one flag it lacks is the one this block adds: `PERSIST`.

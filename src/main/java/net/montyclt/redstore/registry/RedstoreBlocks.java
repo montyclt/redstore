@@ -25,6 +25,7 @@ import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.PushReaction;
 
+import net.montyclt.redstore.block.ChunkLoaderBlock;
 import net.montyclt.redstore.block.FilterHopperBlock;
 import net.montyclt.redstore.block.RedstoneClockBlock;
 import net.montyclt.redstore.block.gate.GateOperation;
@@ -50,6 +51,20 @@ public final class RedstoreBlocks {
 			BlockBehaviour.Properties.ofFullCopy(Blocks.HOPPER)
 	);
 
+	public static final Block CHUNK_LOADER = register(
+			RedstoreBlockIds.CHUNK_LOADER,
+			ChunkLoaderBlock::new,
+			BlockBehaviour.Properties.of()
+					.strength(3.0F)
+					.requiresCorrectToolForDrops()
+					.sound(SoundType.AMETHYST)
+					.lightLevel(state -> state.getValue(ChunkLoaderBlock.ENABLED) ? 7 : 0)
+					// A moving chunk loader would churn tickets every redstone tick.
+					.pushReaction(PushReaction.IMMOVEABLE)
+					// Twelve pixels tall, like the enchanting table it is shaped after.
+					.noOcclusion()
+	);
+
 	public static void initialize() {
 		// No tab of our own: these belong beside the vanilla components they imitate. The chunk
 		// loader, when it exists, goes to FUNCTIONAL_BLOCKS instead. See spec/conventions.md §6.
@@ -60,6 +75,11 @@ public final class RedstoreBlocks {
 			tab.accept(REDSTONE_CLOCK.asItem());
 			tab.accept(FILTER_HOPPER.asItem());
 		});
+
+		// Not a redstone component: it takes no signal, emits none, and no circuit contains one.
+		// See spec/conventions.md §6.2.
+		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(tab ->
+				tab.accept(CHUNK_LOADER.asItem()));
 	}
 
 	private static Block gate(BlockItemId id, GateOperation operation) {

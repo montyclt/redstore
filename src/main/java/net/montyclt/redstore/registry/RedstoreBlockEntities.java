@@ -10,11 +10,15 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 
 import net.montyclt.redstore.Redstore;
+import net.montyclt.redstore.blockentity.ChunkLoaderBlockEntity;
 import net.montyclt.redstore.blockentity.FilterHopperBlockEntity;
 
 public final class RedstoreBlockEntities {
 	public static final BlockEntityType<FilterHopperBlockEntity> FILTER_HOPPER =
 			register("filter_hopper", FilterHopperBlockEntity::new, RedstoreBlocks.FILTER_HOPPER);
+
+	public static final BlockEntityType<ChunkLoaderBlockEntity> CHUNK_LOADER =
+			register("chunk_loader", ChunkLoaderBlockEntity::new, RedstoreBlocks.CHUNK_LOADER);
 
 	public static void initialize() {
 	}

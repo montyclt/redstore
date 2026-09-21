@@ -99,6 +99,8 @@ src/main/java/net/montyclt/redstore
 
 src/client/java/net/montyclt/redstore
 ├── RedstoreClient.java                # ClientModInitializer: screens, render layers
+├── client/render/FilterHopperRenderer.java   # the filter, shown on the block's sides
+├── client/render/ChunkLoaderRenderer.java    # the pearl, facing the camera over the pedestal
 └── client/screen/FilterHopperScreen.java
 ```
 
@@ -257,6 +259,11 @@ precisely defined edit. So far:
   the ingot's colour at the quartz's own four brightnesses, so the inlay's outline reads as depth
   and not as a line — on models composed out of vanilla's own comparator models so that each of
   the three torches can be lit on its own, plus an icon made from the comparator's sprite.
+* **Chunk loader** — the **enchanting table**, whole: its model and its obsidian, with the five
+  teals of the diamond corners recoloured to amethyst and the cloth dyed from red to the ender
+  pearl's teal at the cloth's own brightnesses. The pearl itself is derived from nothing — it is
+  the item, drawn by a block entity renderer. See
+  [blocks/chunk-loader.md](blocks/chunk-loader.md) §8.
 
 They are produced by the Gradle task **`generateAssets`**, implemented in `buildSrc/` and run
 automatically before `processResources`, so the jar and the development client both get them with
@@ -307,9 +314,17 @@ they are derived on the player's machine from the player's own copy, or not at a
 
 What makes this cheap enough to be worth doing:
 
-* **Faithful uses vanilla's palette.** Its `hopper_top` at 64 × 64 is drawn in the same six greys
-  as vanilla's at 16 × 16, and its hopper icon in the same seven. Every colour mapping in the task
-  therefore carries over untouched, which is the part that would have been most expensive.
+* **Faithful uses vanilla's palette — and sometimes adds to it.** Its `hopper_top` at 64 × 64 is
+  drawn in the same six greys as vanilla's at 16 × 16, and its hopper icon in the same seven, so
+  those mappings carry over untouched. That is the common case and it is the part that would have
+  been most expensive.
+
+  But it is not a rule to rely on: four times the pixels leaves room for shading vanilla has no
+  room for. Faithful's enchanting table keeps vanilla's five gem tones exactly and adds **three
+  reds** to the cloth's five. A mapping that names colours one by one is silent about the ones it
+  does not name, so those three stayed red while the rest turned teal — a half-dyed tablecloth, and
+  one that only shows up when the pack is actually on. **A colour mapping is therefore the union of
+  both packs' tones**, and a new one is checked against Faithful before it is believed.
 * **Coordinates scale.** Every region and every glyph is written once for a 16 × 16 texture and
   multiplied by the target's scale. A block occupies the same space in the world whatever its
   texture's resolution, so a mark four pixels wide on a 64 × 64 plate is exactly as big as a

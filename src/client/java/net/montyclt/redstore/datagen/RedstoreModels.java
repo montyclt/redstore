@@ -47,6 +47,8 @@ public class RedstoreModels extends FabricModelProvider {
 		gate(generators, RedstoreBlocks.OR_GATE, "or_gate");
 		gate(generators, RedstoreBlocks.XOR_GATE, "xor_gate");
 		clock(generators);
+
+		chunkLoader(generators);
 		filterHopper(generators);
 	}
 
@@ -98,6 +100,18 @@ public class RedstoreModels extends FabricModelProvider {
 		generators.blockStateOutput.accept(MultiVariantGenerator.dispatch(RedstoreBlocks.REDSTONE_CLOCK)
 				.with(models)
 				.with(facing()));
+	}
+
+	/**
+	 * The chunk loader: one entry and no properties.
+	 *
+	 * <p>`enabled` chooses nothing here because the pearl that shows it is not part of the model —
+	 * it faces the camera, so a block entity renderer draws it and reads the property itself. See
+	 * spec/blocks/chunk-loader.md section 8.
+	 */
+	private void chunkLoader(BlockModelGenerators generators) {
+		generators.blockStateOutput.accept(MultiVariantGenerator.dispatch(
+				RedstoreBlocks.CHUNK_LOADER, model("chunk_loader")));
 	}
 
 	/** The hopper: vanilla's own five, since the block is a hopper in every respect but its filter. */
@@ -156,5 +170,11 @@ public class RedstoreModels extends FabricModelProvider {
 					BuiltInRegistries.ITEM.getValue(Redstore.id(name)),
 					ItemModelUtils.plainModel(Redstore.id("item/" + name)));
 		}
+
+		// The chunk loader is the exception: it is a pedestal, not a plate, so its own model is
+		// what it should look like in a hand and in a slot.
+		generators.itemModelOutput.accept(
+				BuiltInRegistries.ITEM.getValue(Redstore.id("chunk_loader")),
+				ItemModelUtils.plainModel(Redstore.id("block/chunk_loader")));
 	}
 }

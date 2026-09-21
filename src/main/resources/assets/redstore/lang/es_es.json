@@ -31,5 +31,10 @@
 	"tooltip.redstore.or_gate.1": "Dos entradas laterales, una salida al frente, un tick.",
 	"tooltip.redstore.or_gate.2": "Clic derecho: la invierte en NOR.",
 	"tooltip.redstore.xor_gate.1": "Dos entradas laterales, una salida al frente, un tick.",
-	"tooltip.redstore.xor_gate.2": "Clic derecho: la invierte en XNOR."
+	"tooltip.redstore.xor_gate.2": "Clic derecho: la invierte en XNOR.",
+	"block.redstore.chunk_loader": "Cargador de chunks",
+	"message.redstore.chunk_loader.on": "Manteniendo este chunk abierto",
+	"message.redstore.chunk_loader.off": "Soltando este chunk",
+	"tooltip.redstore.chunk_loader.1": "Mantiene su chunk cargado y activo, incluso tras reiniciar.",
+	"tooltip.redstore.chunk_loader.2": "Clic derecho: apágalo o enciéndelo. Los mobs siguen necesitando un jugador."
 }

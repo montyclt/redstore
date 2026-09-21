@@ -55,6 +55,18 @@ public class RedstoreRecipes extends FabricRecipeProvider {
 						.unlockedBy("has_clock", this.has(Items.CLOCK))
 						.save(this.output);
 
+				// The enchanting table's recipe, part for part: a pearl where the book goes,
+				// amethyst where the diamonds go. See spec/blocks/chunk-loader.md section 7.
+				this.shaped(RecipeCategory.REDSTONE, RedstoreBlocks.CHUNK_LOADER)
+						.pattern(" P ")
+						.pattern("AOA")
+						.pattern("OOO")
+						.define('P', Items.ENDER_PEARL)
+						.define('A', Items.AMETHYST_SHARD)
+						.define('O', Blocks.OBSIDIAN)
+						.unlockedBy(getHasName(Items.ENDER_PEARL), this.has(Items.ENDER_PEARL))
+						.save(this.output);
+
 				// A hopper and the item frame that goes on its mouth: the contraption, in two
 				// items, in any order.
 				this.shapeless(RecipeCategory.REDSTONE, RedstoreBlocks.FILTER_HOPPER)

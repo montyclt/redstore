@@ -22,5 +22,6 @@ public class RedstoreLootTables extends FabricBlockLootSubProvider {
 		this.dropSelf(RedstoreBlocks.XOR_GATE);
 		this.dropSelf(RedstoreBlocks.REDSTONE_CLOCK);
 		this.dropSelf(RedstoreBlocks.FILTER_HOPPER);
+		this.dropSelf(RedstoreBlocks.CHUNK_LOADER);
 	}
 }

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "O": "minecraft:obsidian",
+    "P": "minecraft:ender_pearl"
+  },
+  "pattern": [
+    " P ",
+    "AOA",
+    "OOO"
+  ],
+  "result": {
+    "id": "redstore:chunk_loader"
+  }
+}

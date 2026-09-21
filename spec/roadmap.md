@@ -49,8 +49,9 @@ everyone. Parked in [ideas/](ideas/), one file per gate.
 ## Phase 5 — Chunk loader
 
 * Block, block entity, `ChunkLoaderManager`, `ChunkLoaderSavedData`.
-* Deferred ticket acquisition/release, ownership bookkeeping, startup reconciliation.
-* The status message and the particles.
+* Deferred ticket acquisition/release, ownership bookkeeping, startup reconciliation, and the
+  repair path on chunk load.
+* The switch, the pearl that shows it, and the message that says which way it went.
 * **Done when:** a hopper clock in a loader's chunk keeps running with no player in the dimension,
   survives a full server restart, and breaking the block stops it — while an unrelated
   `/forceload`ed chunk is left untouched.

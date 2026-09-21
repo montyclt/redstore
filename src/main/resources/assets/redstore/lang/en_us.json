@@ -31,5 +31,10 @@
 	"tooltip.redstore.or_gate.1": "Two side inputs, one front output, one redstone tick.",
 	"tooltip.redstore.or_gate.2": "Right-click: inverts it into NOR.",
 	"tooltip.redstore.xor_gate.1": "Two side inputs, one front output, one redstone tick.",
-	"tooltip.redstore.xor_gate.2": "Right-click: inverts it into XNOR."
+	"tooltip.redstore.xor_gate.2": "Right-click: inverts it into XNOR.",
+	"block.redstore.chunk_loader": "Chunk Loader",
+	"message.redstore.chunk_loader.on": "Holding this chunk open",
+	"message.redstore.chunk_loader.off": "Letting this chunk go",
+	"tooltip.redstore.chunk_loader.1": "Keeps its own chunk loaded and ticking, across restarts.",
+	"tooltip.redstore.chunk_loader.2": "Right-click: switch it off or on. Mobs still need a player."
 }

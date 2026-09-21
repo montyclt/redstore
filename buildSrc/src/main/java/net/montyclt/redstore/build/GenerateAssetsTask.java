@@ -49,6 +49,8 @@ import org.gradle.api.tasks.TaskAction;
  *       it, and the repeater's own delay models with nothing changed but their textures.</li>
  *   <li><b>logic gates</b> — the comparator's plate with its painted redstone line rubbed out and
  *       its quartz recoloured to the gate's metal, on the comparator's own models.</li>
+ *   <li><b>chunk loader</b> — the enchanting table, with the diamond at its corners recoloured to
+ *       amethyst and its cloth dyed to the ender pearl's teal.</li>
  * </ul>
  *
  * <p>One asset is not derived from anything: the funnel the empty filter slot draws. It is ours,
@@ -128,6 +130,37 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	 * Faithful 64x does, to the colour.
 	 */
 	private static final int[] QUARTZ = {0xFFEBDED4, 0xFFDDCBBE, 0xFFD3C7B9, 0xFFC5B8A9};
+
+	/**
+	 * The enchanting table wears diamond at its corners, drawn in five pale teals. A chunk loader
+	 * wears amethyst instead, and that swap is the block's whole colour change: the cloth keeps the
+	 * red vanilla dyed it, and the obsidian stays obsidian, because the block is made of it.
+	 *
+	 * <p>Lightest for lightest, out of `block/amethyst_block`'s own palette.
+	 */
+	private static final int[] TABLE_GEMS = {0xFFFFFFFF, 0xFFC3FBF1, 0xFFA2F6E7, 0xFF4AEDD1, 0xFF2CCDB1};
+	private static final int[] AMETHYST = {0xFFFECBE6, 0xFFC890F0, 0xFFA678F1, 0xFF8D6ACC, 0xFF7A5BB5};
+
+	/**
+	 * The enchanting table's tablecloth, in the red Mojang dyed it, and the colour ours is dyed
+	 * instead: the teal of {@code item/ender_pearl}, because the cloth is dyed the colour of what it
+	 * holds.
+	 *
+	 * <p>Only the hue changes. Each of the five reds keeps its own brightness, so the folds and the
+	 * shadow under the pearl are still Mojang's — the same trade the gates' inlay makes with the
+	 * comparator's quartz.
+	 */
+	private static final int[] TABLE_CLOTH = {
+			// Vanilla's five.
+			0xFF6B002F, 0xFF7F0728, 0xFFA22929, 0xFF741D32, 0xFF58162C,
+
+			// Three more that Faithful adds. Its gems are vanilla's exactly, and so are five of its
+			// eight reds, but a 64 × 64 cloth has room for shading vanilla's has not — and a tone
+			// this list does not name is a tone that stays red. That is what a half-dyed cloth
+			// looks like, and it is why this list is the union of both packs rather than vanilla's
+			// alone.
+			0xFF951C29, 0xFF86212F, 0xFF6E1C31};
+	private static final int PEARL_TEAL = 0xFF349988;
 
 	/** What each gate is made of, taken from that metal's own ingot texture. */
 	private static final Map<String, Integer> GATE_METALS = new LinkedHashMap<>();
@@ -287,6 +320,7 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		filterHopper(source, target);
 		redstoneClock(source, target);
 		logicGates(source, target);
+		chunkLoader(source, target);
 	}
 
 	/**
@@ -715,6 +749,55 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	}
 
 	/**
+	 * The chunk loader's pedestal: the enchanting table, with its diamond corners recoloured to
+	 * amethyst and its cloth dyed to the ender pearl's teal.
+	 *
+	 * <p>Nothing here is drawn — both edits are colour for colour, on vanilla's own texture and
+	 * vanilla's own model.
+	 *
+	 * <p>The pearl is not here at all. It faces the camera, which a model baked into a chunk mesh
+	 * cannot do, so {@code ChunkLoaderRenderer} draws it — the same division the enchanting table
+	 * makes with its book, whose model is not in the table's model either.
+	 */
+	private void chunkLoader(Source source, Target target) throws IOException {
+		Path out = target.out();
+
+		Map<Integer, Integer> palette = new LinkedHashMap<>();
+
+		for (int tone = 0; tone < TABLE_GEMS.length; tone++) {
+			palette.put(TABLE_GEMS[tone], AMETHYST[tone]);
+		}
+
+		palette.putAll(dye(TABLE_CLOTH, PEARL_TEAL));
+
+		for (String face : new String[]{"top", "side"}) {
+			BufferedImage texture = readPng(source,
+					"assets/minecraft/textures/block/enchanting_table_" + face + ".png");
+			recolour(texture, palette, (x, y) -> true);
+			writePng(out, "textures/block/chunk_loader_" + face + ".png", texture);
+		}
+
+		if (!target.models()) {
+			return;
+		}
+
+		// The pedestal, and only the pedestal. The pearl is not in the model: it faces the camera,
+		// which a baked model cannot do, so a block entity renderer draws it — exactly as the
+		// enchanting table's book is not in the table's model either. See
+		// spec/blocks/chunk-loader.md section 8.
+		JsonObject model = readJson(source, "assets/minecraft/models/block/enchanting_table.json");
+
+		JsonObject textures = new JsonObject();
+		textures.addProperty("particle", "minecraft:block/obsidian");
+		textures.addProperty("bottom", "minecraft:block/enchanting_table_bottom");
+		textures.addProperty("top", "redstore:block/chunk_loader_top");
+		textures.addProperty("side", "redstore:block/chunk_loader_side");
+		model.add("textures", textures);
+
+		writeJson(out, "models/block/chunk_loader.json", model);
+	}
+
+	/**
 	 * The clock: a five-pixel disc on a post, standing beside the output torch.
 	 *
 	 * <p>The disc is two boxes, a wide one crossed with a tall one, which is how pixel art draws a
@@ -810,12 +893,12 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 		return corner;
 	}
 
-	private static JsonObject face(String texture, int u1, int v1, int u2, int v2) {
+	private static JsonObject face(String texture, double u1, double v1, double u2, double v2) {
 		JsonArray uv = new JsonArray();
-		uv.add(u1);
-		uv.add(v1);
-		uv.add(u2);
-		uv.add(v2);
+
+		for (double value : new double[]{u1, v1, u2, v2}) {
+			uv.add(value == Math.rint(value) ? (Number) (int) value : (Number) value);
+		}
 
 		JsonObject face = new JsonObject();
 		face.add("uv", uv);
@@ -945,6 +1028,31 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 	}
 
 	/** The same colour, brighter or darker: every channel scaled, so the hue does not move. */
+	/**
+	 * One colour at somebody else's brightnesses: a dye, not a repaint.
+	 *
+	 * <p>The brightest of the given tones comes out as the colour itself and the rest keep their
+	 * distance from it, so whatever the tones described — folds in cloth, the curve of a bead — is
+	 * still described afterwards. {@link #inlay} does the same thing against the average rather
+	 * than the brightest, because an inlay has to sit *inside* a plate and the plate's own
+	 * brightness is the thing it must not escape.
+	 */
+	private static Map<Integer, Integer> dye(int[] tones, int colour) {
+		double brightest = 0;
+
+		for (int tone : tones) {
+			brightest = Math.max(brightest, luminance(tone));
+		}
+
+		Map<Integer, Integer> dyed = new LinkedHashMap<>();
+
+		for (int tone : tones) {
+			dyed.put(tone, shade(colour, luminance(tone) / brightest));
+		}
+
+		return dyed;
+	}
+
 	private static int shade(int colour, double factor) {
 		int r = channel(((colour >> 16) & 0xFF) * factor);
 		int g = channel(((colour >> 8) & 0xFF) * factor);

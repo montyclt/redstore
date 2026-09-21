@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 
+import net.montyclt.redstore.client.render.ChunkLoaderRenderer;
 import net.montyclt.redstore.client.render.FilterHopperRenderer;
 import net.montyclt.redstore.client.screen.FilterHopperScreen;
 import net.montyclt.redstore.registry.RedstoreBlockEntities;
@@ -20,6 +21,7 @@ public class RedstoreClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		MenuScreens.register(RedstoreMenus.FILTER_HOPPER, FilterHopperScreen::new);
 		BlockEntityRenderers.register(RedstoreBlockEntities.FILTER_HOPPER, FilterHopperRenderer::new);
+		BlockEntityRenderers.register(RedstoreBlockEntities.CHUNK_LOADER, ChunkLoaderRenderer::new);
 		registerFaithfulPack();
 	}
 

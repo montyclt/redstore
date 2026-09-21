@@ -12,6 +12,7 @@ public final class RedstoreBlockIds {
 	public static final BlockItemId XOR_GATE = create("xor_gate");
 	public static final BlockItemId REDSTONE_CLOCK = create("redstone_clock");
 	public static final BlockItemId FILTER_HOPPER = create("filter_hopper");
+	public static final BlockItemId CHUNK_LOADER = create("chunk_loader");
 
 	private static BlockItemId create(String name) {
 		Identifier id = Redstore.id(name);

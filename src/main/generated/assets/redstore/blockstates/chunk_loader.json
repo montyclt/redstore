@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "redstore:block/chunk_loader"
+    }
+  }
+}

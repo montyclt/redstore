@@ -39,7 +39,11 @@ public class RedstoreBlockTags extends FabricTagsProvider.BlockTagsProvider {
 
 		this.builder(BlockTags.MINEABLE_WITH_PICKAXE)
 				.add(RedstoreBlockIds.AND_GATE, RedstoreBlockIds.OR_GATE, RedstoreBlockIds.XOR_GATE,
-						RedstoreBlockIds.REDSTONE_CLOCK, RedstoreBlockIds.FILTER_HOPPER);
+						RedstoreBlockIds.REDSTONE_CLOCK, RedstoreBlockIds.FILTER_HOPPER,
+						RedstoreBlockIds.CHUNK_LOADER);
+
+		// Obsidian's tier, because the block is mostly obsidian.
+		this.builder(BlockTags.NEEDS_DIAMOND_TOOL).add(RedstoreBlockIds.CHUNK_LOADER);
 	}
 
 	private static TagKey<Block> family(String name) {
