@@ -177,6 +177,9 @@ Unlock trigger: `has(Items.ENDER_EYE)`.
   `inventory_changed` on the ingredient that says what the block is for, plus `recipe_unlocked`,
   granting the recipe.
 * No achievement-style advancements.
+* Creative tab: **Functional Blocks**, not Redstone Blocks — see
+  [../conventions.md](../conventions.md) §6.2. It is the only block in the mod that is not a
+  redstone component.
 
 ## 10. Notes and considerations — what runs unattended
 

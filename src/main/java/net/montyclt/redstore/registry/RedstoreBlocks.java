@@ -42,7 +42,8 @@ public final class RedstoreBlocks {
 	);
 
 	public static void initialize() {
-		// The mod's own creative tab comes later; for now the blocks live next to the vanilla hopper.
+		// No tab of our own: these belong beside the vanilla components they imitate. The chunk
+		// loader, when it exists, goes to FUNCTIONAL_BLOCKS instead. See spec/conventions.md §6.
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(tab -> {
 			tab.accept(AND_GATE.asItem());
 			tab.accept(OR_GATE.asItem());

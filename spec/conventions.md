@@ -88,8 +88,7 @@ src/main/java/net/montyclt/redstore
 │   ├── RedstoreBlockIds.java          # BlockItemId per block
 │   ├── RedstoreBlocks.java
 │   ├── RedstoreBlockEntities.java
-│   ├── RedstoreMenus.java
-│   └── RedstoreCreativeTabs.java
+│   └── RedstoreMenus.java
 └── datagen/                           # deferred, see §10
 
 src/client/java/net/montyclt/redstore
@@ -128,22 +127,41 @@ src/main/resources/
 1. `RedstoreBlocks.initialize()` → blocks + block items.
 2. `RedstoreBlockEntities.initialize()`.
 3. `RedstoreMenus.initialize()`.
-4. `RedstoreCreativeTabs.initialize()`.
-5. `ChunkLoaderManager.initialize()` → registers the server lifecycle listeners.
+4. `ChunkLoaderManager.initialize()` → registers the server lifecycle listeners.
 
 `RedstoreClient#onInitializeClient` registers `MenuScreens.register(RedstoreMenus.FILTER_HOPPER,
 FilterHopperScreen::new)`.
 
-## 6. Creative tab
+## 6. Creative tabs
 
-* Own tab `redstore:main`, registered in `BuiltInRegistries.CREATIVE_MODE_TAB`.
-* Title key `itemGroup.redstore.main` → `Redstore` / `Redstore`.
-* Icon: `redstore:and_gate`.
-* Order: AND gate, OR gate, XOR gate, redstone clock, filter hopper, chunk loader.
-* In addition, every item is appended to the vanilla **Redstone Blocks** tab via
-  `CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.REDSTONE_BLOCKS)` — the Fabric API
-  class is `net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents`, not the older
-  `ItemGroupEvents`.
+**The mod has no tab of its own.** Its items are appended to the vanilla tabs where a player would
+look for them:
+
+| Tab | Items | Order |
+| --- | --- | --- |
+| **Redstone Blocks** (`CreativeModeTabs.REDSTONE_BLOCKS`) | AND gate, OR gate, XOR gate, redstone clock, filter hopper | in that order |
+| **Functional Blocks** (`CreativeModeTabs.FUNCTIONAL_BLOCKS`) | chunk loader | — |
+
+Appending is done with `CreativeModeTabEvents.modifyOutputEvent(...)` — the Fabric API class is
+`net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents`, not the older `ItemGroupEvents`.
+
+### 6.1 Why no tab of our own
+
+A tab is a permanent slot in a bar every mod shares. A five-block mod claiming one costs every
+player who installs it a row of the creative menu, and it buys them nothing: they already know
+where a repeater lives, and that is where these blocks belong. A tab earns its place when a mod
+adds enough that its items would drown in vanilla's; six blocks do not.
+
+The blocks are also easier to *find* this way, next to the vanilla components they imitate, which
+is the whole point of a mod that promises no new rules.
+
+### 6.2 Why the chunk loader is the exception
+
+It is not a redstone component: it takes no signal, emits none, and no circuit contains one. In
+vanilla's own jar the redstone tab is where the repeater, the comparator and the hopper sit
+together — so the filter hopper and the plates belong there — while the beacon, the conduit, the
+ender chest and the lodestone share the functional tab. Those four are exactly the chunk loader's
+neighbours: placed utilities that quietly change what the world does around them.
 
 ## 7. Translations
 
@@ -156,7 +174,6 @@ Key scheme:
 
 | Key | en_us | es_es |
 | --- | --- | --- |
-| `itemGroup.redstore.main` | Redstore | Redstore |
 | `block.redstore.and_gate` | AND Gate | Puerta AND |
 | `block.redstore.or_gate` | OR Gate | Puerta OR |
 | `block.redstore.xor_gate` | XOR Gate | Puerta XOR |
