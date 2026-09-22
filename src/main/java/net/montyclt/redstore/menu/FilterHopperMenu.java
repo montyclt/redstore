@@ -89,11 +89,6 @@ public class FilterHopperMenu extends AbstractContainerMenu {
 			}
 
 			@Override
-			public boolean mayPlace(ItemStack stack) {
-				return true;
-			}
-
-			@Override
 			public Identifier getNoItemIcon() {
 				return FILTER_ICON;
 			}

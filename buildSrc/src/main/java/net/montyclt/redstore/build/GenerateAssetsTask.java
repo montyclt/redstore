@@ -86,7 +86,7 @@ public abstract class GenerateAssetsTask extends DefaultTask {
 			0xFF383838, 0xFF734029,
 			0xFF303030, 0xFF603623);
 
-	/** Gold and shadow from the vanilla clock item. */	/** Gold and shadow from the vanilla clock item. */
+	/** Gold and shadow from the vanilla clock item. */
 	private static final int DIAL_GOLD = 0xFFFAD64A;
 	private static final int DIAL_DARK = 0xFF752802;
 

@@ -22,7 +22,7 @@ import net.minecraft.world.level.redstone.Orientation;
 /**
  * A plate that emits a periodic signal, replacing a vanilla repeater loop and its lever.
  *
- * <p>It runs by default and a redstone signal on its back stops it. The setting N always means the
+ * <p>It runs by default and a redstone signal on either side stops it. The setting N always means the
  * same thing — the period is 2N redstone ticks — and the mode only chooses the duty cycle: half on
  * and half off, or a single one-tick pulse.
  *
@@ -60,8 +60,14 @@ public class RedstoneClockBlock extends RedstonePlateBlock {
 	// ------------------------------------------------------------------ running
 
 	/**
-	 * A diode pointing at either side face stops the clock — the same mechanism, and the same
-	 * rule, that locks a repeater. See {@link RedstonePlateBlock#readLock}.
+	 * A diode pointing at either side face stops the clock — the same mechanism, and the same rule,
+	 * that locks a repeater.
+	 *
+	 * <p>This is {@code DiodeBlock#getAlternateSignal} line for line, with {@code sideInputDiodesOnly}
+	 * fixed at true: the strongest signal on either flank, counting only blocks vanilla accepts as
+	 * diodes. A block of redstone against the side does nothing, however strongly it is powered.
+	 * It is copied rather than called because a clock is not a {@code DiodeBlock} and cannot be —
+	 * see {@link RedstonePlateBlock}.
 	 *
 	 * <p>The back is the block's input in vanilla's {@code FACING} convention and the front is its
 	 * output, so neither of them can be used: reading the front would let the clock's own output
@@ -69,9 +75,12 @@ public class RedstoneClockBlock extends RedstonePlateBlock {
 	 */
 	private boolean sidePowered(Level level, BlockPos pos, BlockState state) {
 		Direction facing = state.getValue(FACING);
+		Direction left = facing.getCounterClockWise();
+		Direction right = facing.getClockWise();
 
-		return this.readLock(level, pos, facing.getClockWise()) > 0
-				|| this.readLock(level, pos, facing.getCounterClockWise()) > 0;
+		return Math.max(
+				level.getControlInputSignal(pos.relative(right), right, true),
+				level.getControlInputSignal(pos.relative(left), left, true)) > 0;
 	}
 
 	/** Game ticks the phase the block is entering should last. */

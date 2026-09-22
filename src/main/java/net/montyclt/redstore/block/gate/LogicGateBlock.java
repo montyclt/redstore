@@ -92,13 +92,21 @@ public class LogicGateBlock extends DiodeBlock {
 	@Override
 	protected boolean shouldTurnOn(Level level, BlockPos pos, BlockState state) {
 		Direction facing = state.getValue(FACING);
-		Direction left = facing.getCounterClockWise();
-		Direction right = facing.getClockWise();
 
-		int a = level.getControlInputSignal(pos.relative(left), left, false);
-		int b = level.getControlInputSignal(pos.relative(right), right, false);
+		int a = this.flank(level, pos, facing.getCounterClockWise());
+		int b = this.flank(level, pos, facing.getClockWise());
 
 		return this.operation.test(a, b) != state.getValue(INVERTED);
+	}
+
+	/**
+	 * One flank, read the way this block says its flanks are read.
+	 *
+	 * <p>The last argument is {@link #sideInputDiodesOnly()} and not a literal, so that the rule is
+	 * stated once: change that override and both the logic and the torches follow.
+	 */
+	private int flank(Level level, BlockPos pos, Direction side) {
+		return level.getControlInputSignal(pos.relative(side), side, this.sideInputDiodesOnly());
 	}
 
 	/**
@@ -134,11 +142,9 @@ public class LogicGateBlock extends DiodeBlock {
 		}
 
 		Direction facing = state.getValue(FACING);
-		Direction left = facing.getCounterClockWise();
-		Direction right = facing.getClockWise();
 
-		boolean lit = level.getControlInputSignal(pos.relative(left), left, false) > 0;
-		boolean rit = level.getControlInputSignal(pos.relative(right), right, false) > 0;
+		boolean lit = this.flank(level, pos, facing.getCounterClockWise()) > 0;
+		boolean rit = this.flank(level, pos, facing.getClockWise()) > 0;
 
 		if (lit != state.getValue(INPUT_LEFT) || rit != state.getValue(INPUT_RIGHT)) {
 			level.setBlock(pos, state.setValue(INPUT_LEFT, lit).setValue(INPUT_RIGHT, rit),

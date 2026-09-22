@@ -1,7 +1,5 @@
 package net.montyclt.redstore.blockentity;
 
-import org.jspecify.annotations.Nullable;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.Container;
@@ -82,8 +80,9 @@ final class HopperLogic {
 		return true;
 	}
 
-	private static int[] slotsFor(Container container, @Nullable Direction side) {
-		if (container instanceof WorldlyContainer worldly && side != null) {
+	/** Which slots of this container can be reached from that side. */
+	private static int[] slotsFor(Container container, Direction side) {
+		if (container instanceof WorldlyContainer worldly) {
 			return worldly.getSlotsForFace(side);
 		}
 

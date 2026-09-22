@@ -115,14 +115,6 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 		return this.filterContainer.getItem(0);
 	}
 
-	public Container getFilterContainer() {
-		return this.filterContainer;
-	}
-
-	public ContainerData getDataAccess() {
-		return this.dataAccess;
-	}
-
 	public boolean isBlacklist() {
 		return this.blacklist;
 	}
@@ -172,14 +164,6 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 			hopper.transferCooldown = TRANSFER_COOLDOWN;
 			hopper.setChanged();
 		}
-	}
-
-	public void setTransferCooldown(int cooldown) {
-		this.transferCooldown = cooldown;
-	}
-
-	public boolean isOnCooldown() {
-		return this.transferCooldown > 0;
 	}
 
 	public boolean isFull() {
@@ -350,7 +334,8 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 
 	@Override
 	public boolean canPlaceItemThroughFace(int slot, ItemStack stack, @Nullable Direction side) {
-		return this.filterAccepts(stack);
+		// A hopper reaching in from a side is still an insertion, so it gets the same answer.
+		return this.canPlaceItem(slot, stack);
 	}
 
 	@Override
