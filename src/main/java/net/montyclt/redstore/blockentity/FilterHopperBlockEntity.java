@@ -43,7 +43,8 @@ public class FilterHopperBlockEntity extends BlockEntity implements Hopper, Worl
 	public static final int CONTAINER_SIZE = 5;
 	public static final int TRANSFER_COOLDOWN = 8;
 
-	private static final int[] ALL_SLOTS = {0, 1, 2, 3, 4};
+	/** Every slot, from the side: the same array vanilla hands out for a container with no sides. */
+	private static final int[] ALL_SLOTS = HopperLogic.flatSlots(CONTAINER_SIZE);
 
 	private final NonNullList<ItemStack> items = NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
 

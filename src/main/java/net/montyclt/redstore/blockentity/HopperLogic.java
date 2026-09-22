@@ -29,6 +29,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * of phase with a chain of vanilla ones.
  */
 final class HopperLogic {
+	/** Indexed by container size; 54 is a double chest, which is vanilla's own ceiling. */
+	private static final int[][] FLAT_SLOTS = new int[54][];
+
 	private HopperLogic() {
 	}
 
@@ -86,9 +89,40 @@ final class HopperLogic {
 			return worldly.getSlotsForFace(side);
 		}
 
-		int[] slots = new int[container.getContainerSize()];
+		return flatSlots(container.getContainerSize());
+	}
 
-		for (int i = 0; i < slots.length; i++) {
+	/**
+	 * Every slot of a container that has no sides — {@code 0 … size - 1} — built once per size.
+	 *
+	 * <p>The cache is vanilla's, down to the length: {@code HopperBlockEntity} keeps the same table
+	 * of 54, which is a double chest, and falls back to building a fresh array for anything bigger.
+	 * It matters because the commonest thing a hopper pushes into is a chest, a chest has no sides,
+	 * and so every push that took this path allocated a fresh {@code int[27]} — once per hopper
+	 * every eight ticks, in a sorter that is hundreds of hoppers.
+	 *
+	 * <p>Like vanilla's, it is unsynchronised: two threads racing would each build an identical
+	 * array and one would win, which is why vanilla does not guard it either.
+	 */
+	static int[] flatSlots(int size) {
+		if (size >= FLAT_SLOTS.length) {
+			return createFlatSlots(size);
+		}
+
+		int[] cached = FLAT_SLOTS[size];
+
+		if (cached == null) {
+			cached = createFlatSlots(size);
+			FLAT_SLOTS[size] = cached;
+		}
+
+		return cached;
+	}
+
+	private static int[] createFlatSlots(int size) {
+		int[] slots = new int[size];
+
+		for (int i = 0; i < size; i++) {
 			slots[i] = i;
 		}
 
