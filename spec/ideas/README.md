@@ -17,12 +17,16 @@ an idea; if it is ruled out for good it stays here with that written down.
 | [rs-latch.md](rs-latch.md) | Proposed on 2026-09-21 |
 | [vertical-wire.md](vertical-wire.md) | Proposed on 2026-09-21 |
 | [chunk-loader-area.md](chunk-loader-area.md) | Proposed on 2026-09-21 |
+| [filter-hopper-minecart.md](filter-hopper-minecart.md) | Proposed on 2026-09-22 |
+| [multi-item-filter.md](multi-item-filter.md) | Proposed on 2026-09-22 |
 
 Two of them — the [T flip-flop](t-flip-flop.md) and the [RS latch](rs-latch.md) — would both give
 the mod **memory**, which it has none of today. That is one decision, not two, and it is taken
-once. The rest are unrelated to each other and to the analog gates, and
-[chunk-loader-area.md](chunk-loader-area.md) is the only one that would change a block that is
-already built rather than add one.
+once. The rest are unrelated to each other and to the analog gates.
+
+Two of them would change a block that is already built rather than add one:
+[chunk-loader-area.md](chunk-loader-area.md) and [multi-item-filter.md](multi-item-filter.md). The
+filter hopper minecart would be the mod's first entity.
 
 ## Why the three analog gates were withdrawn together
 
